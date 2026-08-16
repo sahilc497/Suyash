@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Github, FileCode2 } from "lucide-react";
+import { FileCode2 } from "lucide-react";
+
+const GithubIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.24c3-.34 6-1.53 6-6.76a5.2 5.2 0 0 0-1.5-3.78 4.7 4.7 0 0 0-.15-3.72s-1.2-.38-3.9 1.4a13.38 13.38 0 0 0-7 0c-2.7-1.8-3.9-1.4-3.9-1.4a4.7 4.7 0 0 0-.15 3.72 5.2 5.2 0 0 0-1.5 3.78c0 5.23 3 6.42 6 6.76a4.8 4.8 0 0 0-1 3.24v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+);
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -44,7 +48,7 @@ export default async function ProjectPage({ params }: PageProps) {
           <div className="flex flex-col sm:flex-row gap-4 mb-10">
             {project.github_url && (
               <a href={project.github_url} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 px-4 py-2 bg-[#111111] text-white hover:bg-[#333333] transition-colors text-sm font-medium">
-                <Github className="h-4 w-4" /> Source Code
+                <GithubIcon className="h-4 w-4" /> Source Code
               </a>
             )}
             {project.architecture_url && (
