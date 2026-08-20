@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ImageIcon, ArrowLeft, Upload } from "lucide-react";
+import { Upload, ArrowLeft, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 
-export default function NewProjectPage() {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function EditProjectPage({ params }: PageProps) {
+  const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // File Upload State
@@ -26,24 +32,48 @@ export default function NewProjectPage() {
     progress: 0,
     github_url: "",
     architecture_url: "",
+    image_url: "",
     is_featured: false,
     is_published: true,
   });
 
-  const generateSlug = (title: string) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-  };
+  // Fetch existing project data
+  useEffect(() => {
+    const fetchProject = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const title = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      title,
-      slug: prev.slug === generateSlug(prev.title) ? generateSlug(title) : prev.slug,
-    }));
-  };
+      if (error || !data) {
+        setError("Project not found.");
+        setLoading(false);
+      } else {
+        setFormData({
+          title: data.title || "",
+          slug: data.slug || "",
+          short_description: data.short_description || "",
+          category: data.category || "Arduino & ESP32",
+          content: data.content || "",
+          difficulty: data.difficulty || "Intermediate",
+          status: data.status || "In Progress",
+          progress: data.progress || 0,
+          github_url: data.github_url || "",
+          architecture_url: data.architecture_url || "",
+          image_url: data.image_url || "",
+          is_featured: data.is_featured || false,
+          is_published: data.is_published ?? true,
+        });
+        if (data.image_url) setImagePreview(data.image_url);
+        setLoading(false);
+      }
+    };
 
-  // Convert uploaded image file to Data URL preview
+    fetchProject();
+  }, [id]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -56,7 +86,6 @@ export default function NewProjectPage() {
     reader.readAsDataURL(file);
   };
 
-  // Upload file directly to Supabase Storage Bucket `project-covers`
   const uploadCoverToSupabase = async (file: File): Promise<string | null> => {
     try {
       const supabase = createClient();
@@ -86,60 +115,63 @@ export default function NewProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError(null);
 
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      setError("You must be logged in to create a project.");
-      setLoading(false);
-      return;
-    }
+    let finalImageUrl = formData.image_url;
 
-    let finalImageUrl = "/circuit-schematic.jpg";
-
-    // Storage File Upload
     if (imageFile) {
       const uploadedUrl = await uploadCoverToSupabase(imageFile);
       if (uploadedUrl) finalImageUrl = uploadedUrl;
-    } else if (imagePreview && imagePreview.length < 100000) {
+    } else if (imagePreview && imagePreview !== formData.image_url && imagePreview.length < 100000) {
       finalImageUrl = imagePreview;
     }
 
-    const { error: insertError } = await supabase.from("projects").insert({
-      title: formData.title,
-      slug: formData.slug,
-      short_description: formData.short_description,
-      category: formData.category,
-      content: formData.content,
-      difficulty: formData.difficulty,
-      status: formData.status,
-      progress: formData.progress,
-      github_url: formData.github_url || null,
-      architecture_url: formData.architecture_url || null,
-      image_url: finalImageUrl,
-      is_featured: formData.is_featured,
-      is_published: formData.is_published,
-    });
+    const { error: updateError } = await supabase
+      .from("projects")
+      .update({
+        title: formData.title,
+        slug: formData.slug,
+        short_description: formData.short_description,
+        category: formData.category,
+        content: formData.content,
+        difficulty: formData.difficulty,
+        status: formData.status,
+        progress: formData.progress,
+        github_url: formData.github_url || null,
+        architecture_url: formData.architecture_url || null,
+        image_url: finalImageUrl,
+        is_featured: formData.is_featured,
+        is_published: formData.is_published,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-    if (insertError) {
-      setError(insertError.message);
-      setLoading(false);
+    if (updateError) {
+      setError(updateError.message);
+      setSaving(false);
     } else {
       window.location.href = "/admin/projects";
     }
   };
 
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-cool-slate font-medium">
+        Loading project details...
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl pb-12">
       <div className="mb-8">
         <Link href="/admin/projects" className="inline-flex items-center gap-1.5 text-xs text-cool-slate hover:text-[#0f172a] font-semibold mb-2">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to Projects
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to Projects List
         </Link>
-        <h1 className="text-3xl font-bold text-[#111111] font-heading">Create New Project</h1>
-        <p className="text-[#666666] text-sm mt-1">Publish a new hardware build or engineering schematic log.</p>
+        <h1 className="text-3xl font-bold text-[#111111] font-heading">Edit Project</h1>
+        <p className="text-[#666666] text-sm mt-1">Update build logs, schematics, and project cover images.</p>
       </div>
 
       {error && (
@@ -156,9 +188,8 @@ export default function NewProjectPage() {
               type="text"
               required
               value={formData.title}
-              onChange={handleTitleChange}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
-              placeholder="e.g. ESP32 Handheld Game Console"
             />
           </div>
           <div>
@@ -202,10 +233,10 @@ export default function NewProjectPage() {
           </div>
         </div>
 
-        {/* FILE UPLOAD PROJECT COVER IMAGE SECTION */}
+        {/* COVER IMAGE UPLOAD SECTION */}
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
           <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
-            <Upload className="h-4 w-4 text-steel-blue" /> Upload Project Cover Image
+            <Upload className="h-4 w-4 text-steel-blue" /> Upload New Cover Image
           </label>
           <input
             type="file"
@@ -216,7 +247,7 @@ export default function NewProjectPage() {
 
           {imagePreview && (
             <div className="space-y-1 pt-1">
-              <span className="block text-[11px] font-bold text-cool-slate">Cover Image Preview:</span>
+              <span className="block text-[11px] font-bold text-cool-slate">Current / New Cover Preview:</span>
               <div className="w-full aspect-video max-h-48 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
                 <img src={imagePreview} alt="Cover Preview" className="w-full h-full object-cover" />
               </div>
@@ -232,7 +263,6 @@ export default function NewProjectPage() {
             value={formData.short_description}
             onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
             className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
-            placeholder="A brief summary of the build..."
           />
         </div>
         
@@ -244,7 +274,6 @@ export default function NewProjectPage() {
               value={formData.github_url}
               onChange={(e) => setFormData({ ...formData, github_url: e.target.value })}
               className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
-              placeholder="https://github.com/..."
             />
           </div>
           <div>
@@ -254,7 +283,6 @@ export default function NewProjectPage() {
               value={formData.architecture_url}
               onChange={(e) => setFormData({ ...formData, architecture_url: e.target.value })}
               className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
-              placeholder="https://..."
             />
           </div>
         </div>
@@ -267,7 +295,6 @@ export default function NewProjectPage() {
             value={formData.content}
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
             className="w-full p-4 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors font-mono text-xs leading-relaxed"
-            placeholder="### Overview&#10;Describe your components, circuit design, and assembly instructions..."
           />
         </div>
 
@@ -302,10 +329,10 @@ export default function NewProjectPage() {
           </button>
           <button
             type="submit"
-            disabled={loading}
-            className="px-6 py-2.5 rounded-xl bg-[#111111] hover:bg-steel-blue text-white text-xs font-bold transition-all disabled:opacity-50"
+            disabled={saving}
+            className="px-6 py-2.5 rounded-xl bg-[#111111] hover:bg-steel-blue text-white text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
           >
-            {loading ? "Publishing Project..." : "Publish Project"}
+            <Save className="h-4 w-4" /> {saving ? "Saving Changes..." : "Save Project Changes"}
           </button>
         </div>
       </form>

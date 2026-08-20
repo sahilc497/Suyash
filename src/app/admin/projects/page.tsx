@@ -53,7 +53,13 @@ export default async function AdminProjectsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-[#666666]">{new Date(project.created_at).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right flex items-center justify-end gap-3">
+                    <Link
+                      href={`/admin/projects/${project.id}/edit`}
+                      className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-[#0f172a] text-xs font-bold rounded-lg border border-slate-300 transition-colors"
+                    >
+                      Edit
+                    </Link>
                     <DeleteButton table="projects" id={project.id} />
                   </td>
                 </tr>
