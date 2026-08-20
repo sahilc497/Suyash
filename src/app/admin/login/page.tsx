@@ -28,8 +28,8 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/admin");
-      router.refresh();
+      // Force hard window navigation to sync cookies with Next.js middleware
+      window.location.href = "/admin";
     }
   };
 
