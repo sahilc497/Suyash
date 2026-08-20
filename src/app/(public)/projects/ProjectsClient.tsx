@@ -106,7 +106,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
               <div>
                 <Link href={`/projects/${project.slug}`} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
                   <img 
-                    src={project.image_url || "/circuit-board-header.jpg"} 
+                    src={project.image_url || "/circuit-schematic.jpg"} 
                     alt={project.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />

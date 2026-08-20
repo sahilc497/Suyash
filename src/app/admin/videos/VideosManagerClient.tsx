@@ -27,7 +27,7 @@ function extractYouTubeInfo(url: string) {
 
   const defaultThumbnail = videoId 
     ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` 
-    : "/circuit-board-header.jpg";
+    : "/circuit-schematic.jpg";
 
   const embedUrl = videoId 
     ? `https://www.youtube.com/embed/${videoId}?autoplay=1` 

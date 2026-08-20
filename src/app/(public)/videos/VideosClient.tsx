@@ -35,7 +35,7 @@ export default function VideosClient({ initialVideos }: { initialVideos: VideoIt
                 className="w-full aspect-video bg-slate-900 overflow-hidden relative block cursor-pointer"
               >
                 <img 
-                  src={video.thumbnail_url || "/circuit-board-header.jpg"} 
+                  src={video.thumbnail_url || "/circuit-schematic.jpg"} 
                   alt={video.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />

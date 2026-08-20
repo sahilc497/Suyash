@@ -6,7 +6,7 @@ export function parseYouTubeUrl(url: string) {
   if (!url) {
     return {
       videoId: "",
-      thumbnailUrl: "/circuit-board-header.jpg",
+      thumbnailUrl: "/circuit-schematic.jpg",
       embedUrl: "",
     };
   }
@@ -23,7 +23,7 @@ export function parseYouTubeUrl(url: string) {
 
   const thumbnailUrl = videoId
     ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-    : "/circuit-board-header.jpg";
+    : "/circuit-schematic.jpg";
 
   const embedUrl = videoId
     ? `https://www.youtube.com/embed/${videoId}?autoplay=1`

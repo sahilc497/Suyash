@@ -71,7 +71,7 @@ export default function HeroSlideshow() {
             title: s.title,
             category: s.category || "BUILD SHOWCASE",
             description: s.description,
-            image: s.image_url || s.image || "/circuit-board-header.jpg",
+            image: s.image_url || s.image || "/circuit-schematic.jpg",
             video_url: s.video_url,
           }));
           setSlides(mapped);
@@ -91,7 +91,7 @@ export default function HeroSlideshow() {
             title: s.title,
             category: s.category || "BUILD SHOWCASE",
             description: s.description,
-            image: s.image_url || s.image || "/circuit-board-header.jpg",
+            image: s.image_url || s.image || "/circuit-schematic.jpg",
             video_url: s.video_url,
           }));
           if (activeSlides.length > 0) {
