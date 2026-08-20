@@ -34,19 +34,19 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="w-full bg-white/95 backdrop-blur-md sticky top-0 z-50 py-3.5 sm:py-4 border-b border-slate-200/80 shadow-2xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between gap-4">
+    <header className="w-full bg-white/95 backdrop-blur-md sticky top-0 z-50 py-3 sm:py-4 border-b border-slate-200/80 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between gap-2 sm:gap-4">
         
-        {/* Brand / Logo Section */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform p-1">
+        {/* Brand / Logo Section (Fits cleanly on mobile screens without overflowing) */}
+        <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform p-1 shrink-0">
             <img src="/logo.png" alt="S.D Creation Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-base sm:text-lg md:text-xl text-[#0f172a] leading-none tracking-tight group-hover:text-steel-blue transition-colors">
+          <div className="flex flex-col min-w-0">
+            <span className="font-extrabold text-sm sm:text-lg md:text-xl text-[#0f172a] leading-none tracking-tight group-hover:text-steel-blue transition-colors truncate">
               Suyash Desai
             </span>
-            <span className="text-[10px] sm:text-[12px] text-cool-slate font-medium tracking-wide mt-0.5">
+            <span className="text-[10px] sm:text-[12px] text-cool-slate font-medium tracking-wide mt-0.5 truncate">
               Electronics • Robotics • IoT
             </span>
           </div>
@@ -79,7 +79,7 @@ export default function Navbar() {
         </nav>
 
         {/* Right Section: Desktop Social Icons + Mobile Menu Toggle */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="hidden sm:flex items-center gap-3.5 text-cool-slate">
             <Link 
               href="https://github.com/astrix884" 
@@ -115,18 +115,18 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Hamburger Button (3-lines menu icon) */}
+          {/* Mobile 3-Lines Hamburger Menu Button (Guaranteed visible on all mobile phone screens) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0f172a] text-white hover:bg-navy-slate font-bold text-xs shadow-xs transition-all border border-slate-800 shrink-0"
+            className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-steel-blue text-white hover:bg-blue-700 font-bold text-xs shadow-xs transition-all shrink-0 active:scale-95"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? (
-              <X className="h-5 w-5 stroke-[2.5]" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5]" />
             ) : (
-              <Menu className="h-5 w-5 stroke-[2.5]" />
+              <Menu className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5]" />
             )}
-            <span className="text-[11px] uppercase tracking-wider font-mono font-bold">Menu</span>
+            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-mono font-bold">Menu</span>
           </button>
         </div>
 
@@ -146,7 +146,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`py-2 px-3 rounded-xl transition-all ${
+                  className={`py-2.5 px-4 rounded-xl transition-all ${
                     isActive
                       ? "bg-blue-50 text-steel-blue font-bold"
                       : "text-slate-700 hover:bg-slate-50"
