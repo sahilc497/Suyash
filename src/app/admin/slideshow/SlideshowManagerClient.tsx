@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Plus, Edit2, Trash2, Video, Image as ImageIcon, Save, Check, X, ExternalLink, Upload, Film } from "lucide-react";
+import { parseYouTubeUrl } from "@/lib/youtube";
+import { Plus, Edit2, Trash2, Video, Image as ImageIcon, Check, X, ExternalLink, AlertCircle } from "lucide-react";
 
 interface SlideItem {
   id: string;
@@ -20,18 +21,26 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
   const [editingSlide, setEditingSlide] = useState<SlideItem | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // File upload state for new slide
-  const [newImagePreview, setNewImagePreview] = useState<string>("/slideshow/slide1.png");
+  // Form previews
+  const [newImagePreview, setNewImagePreview] = useState<string>("");
+  const [newVideoUrl, setNewVideoUrl] = useState<string>("");
+  
   const [editImagePreview, setEditImagePreview] = useState<string>("");
+  const [editVideoUrl, setEditVideoUrl] = useState<string>("");
+
+  // File objects
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [editFile, setEditFile] = useState<File | null>(null);
 
   // Sync slides from Supabase DB on mount
   useEffect(() => {
     const syncSlides = async () => {
       try {
         const supabase = createClient();
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("slideshow_slides")
           .select("*")
           .order("display_order", { ascending: true });
@@ -46,10 +55,16 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
     syncSlides();
   }, []);
 
-  // Convert uploaded image file to Data URL
+  // Convert uploaded image file to Data URL and store File object
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (isEdit) {
+      setEditFile(file);
+    } else {
+      setNewFile(file);
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -63,17 +78,75 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
     reader.readAsDataURL(file);
   };
 
+  // Helper to upload image file to Supabase Storage bucket
+  const uploadImageToSupabase = async (file: File): Promise<string | null> => {
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `slide_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `slideshow/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('slideshow-images')
+        .upload(filePath, file, { upsert: true });
+
+      if (error) {
+        console.error("Storage upload error:", error);
+        return null;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('slideshow-images')
+        .getPublicUrl(filePath);
+
+      return publicUrlData.publicUrl;
+    } catch (err) {
+      console.error("Image upload exception:", err);
+      return null;
+    }
+  };
+
   // Create Slide in Supabase DB
   const handleCreateSlide = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
+
     const formData = new FormData(e.currentTarget);
-    
-    const finalImageUrl = newImagePreview || (formData.get("image_url_fallback") as string) || "/slideshow/slide1.png";
     const title = formData.get("title") as string || "New Build Slide";
     const description = formData.get("description") as string || "";
     const category = formData.get("category") as string || "EMBEDDED HARDWARE";
-    const video_url = formData.get("video_url") as string || "";
+    const video_url = (formData.get("video_url") as string || "").trim();
+    const fallbackUrl = (formData.get("image_url_fallback") as string || "").trim();
+
+    let finalImageUrl = "";
+
+    // 1. Try file upload to Supabase storage
+    if (newFile) {
+      const uploadedUrl = await uploadImageToSupabase(newFile);
+      if (uploadedUrl) finalImageUrl = uploadedUrl;
+    }
+
+    // 2. Try Data URL preview if storage upload wasn't used
+    if (!finalImageUrl && newImagePreview) {
+      finalImageUrl = newImagePreview;
+    }
+
+    // 3. Try typed fallback image URL
+    if (!finalImageUrl && fallbackUrl) {
+      finalImageUrl = fallbackUrl;
+    }
+
+    // 4. Auto grab YouTube thumbnail if video URL is provided
+    if (!finalImageUrl && video_url) {
+      const { thumbnailUrl } = parseYouTubeUrl(video_url);
+      if (thumbnailUrl) finalImageUrl = thumbnailUrl;
+    }
+
+    // 5. Final fallback default image
+    if (!finalImageUrl) {
+      finalImageUrl = "/circuit-schematic.jpg";
+    }
 
     const supabase = createClient();
     const { data, error } = await supabase
@@ -92,23 +165,17 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
 
     if (error) {
       console.error("Error inserting slide in Supabase:", error);
-      const fallbackSlide: SlideItem = {
-        id: Date.now().toString(),
-        title,
-        description,
-        category,
-        image_url: finalImageUrl,
-        video_url,
-        display_order: slides.length + 1,
-        is_active: true,
-      };
-      setSlides([...slides, fallbackSlide]);
-    } else if (data) {
+      setErrorMessage(`Failed to save to Database: ${error.message}`);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (data) {
       setSlides([...slides, data as SlideItem]);
     }
 
     try {
-      localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify(slides));
+      localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify([...slides, data]));
       window.dispatchEvent(new Event("slideshow_updated"));
     } catch (err) {
       console.error(err);
@@ -116,7 +183,9 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
 
     setIsSubmitting(false);
     setIsNewModalOpen(false);
-    setNewImagePreview("/slideshow/slide1.png");
+    setNewImagePreview("");
+    setNewFile(null);
+    setNewVideoUrl("");
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   };
@@ -126,13 +195,29 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
     e.preventDefault();
     if (!editingSlide) return;
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     const formData = new FormData(e.currentTarget);
-    const finalImageUrl = editImagePreview || editingSlide.image_url;
     const title = formData.get("title") as string || editingSlide.title;
     const description = formData.get("description") as string || editingSlide.description;
     const category = formData.get("category") as string || editingSlide.category;
-    const video_url = formData.get("video_url") as string || editingSlide.video_url;
+    const video_url = (formData.get("video_url") as string || editingSlide.video_url || "").trim();
+
+    let finalImageUrl = editingSlide.image_url;
+
+    // 1. Try file upload to Supabase storage
+    if (editFile) {
+      const uploadedUrl = await uploadImageToSupabase(editFile);
+      if (uploadedUrl) finalImageUrl = uploadedUrl;
+    } else if (editImagePreview) {
+      finalImageUrl = editImagePreview;
+    }
+
+    // Auto grab YouTube thumbnail if image is default/empty
+    if ((!finalImageUrl || finalImageUrl === "/circuit-schematic.jpg") && video_url) {
+      const { thumbnailUrl } = parseYouTubeUrl(video_url);
+      if (thumbnailUrl) finalImageUrl = thumbnailUrl;
+    }
 
     const supabase = createClient();
     const { error } = await supabase
@@ -148,6 +233,9 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
 
     if (error) {
       console.error("Error updating slide in Supabase:", error);
+      setErrorMessage(`Failed to update Database: ${error.message}`);
+      setIsSubmitting(false);
+      return;
     }
 
     const updatedSlide: SlideItem = {
@@ -172,6 +260,7 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
     setIsSubmitting(false);
     setEditingSlide(null);
     setEditImagePreview("");
+    setEditFile(null);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   };
@@ -224,10 +313,17 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
   return (
     <div className="space-y-6">
       
-      {/* Alert banner for save status */}
+      {/* Success Notification */}
       {savedSuccess && (
-        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-sm flex items-center gap-2 font-medium">
+        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-sm flex items-center gap-2 font-medium shadow-xs">
           <Check className="h-5 w-5 text-emerald-600" /> Hero Slideshow updated successfully!
+        </div>
+      )}
+
+      {/* Error Notification */}
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-300 text-red-800 rounded-xl text-sm flex items-center gap-2 font-medium shadow-xs">
+          <AlertCircle className="h-5 w-5 text-red-600 shrink-0" /> {errorMessage}
         </div>
       )}
 
@@ -238,7 +334,9 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
         </p>
         <button
           onClick={() => {
-            setNewImagePreview("/slideshow/slide1.png");
+            setNewImagePreview("");
+            setNewFile(null);
+            setNewVideoUrl("");
             setIsNewModalOpen(true);
           }}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
@@ -260,7 +358,7 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
               {/* Image Preview Banner */}
               <div className="relative h-44 bg-[#111111] overflow-hidden">
                 <img 
-                  src={slide.image_url} 
+                  src={slide.image_url || "/circuit-schematic.jpg"} 
                   alt={slide.title} 
                   className="w-full h-full object-cover"
                 />
@@ -312,6 +410,7 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
                   onClick={() => {
                     setEditingSlide(slide);
                     setEditImagePreview(slide.image_url);
+                    setEditVideoUrl(slide.video_url || "");
                   }}
                   className="p-1.5 text-[#555555] hover:text-[#111111] hover:bg-[#eeeeee] rounded transition-colors cursor-pointer"
                   title="Edit Slide"
@@ -387,11 +486,19 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
 
               <div>
                 <label className="block text-xs font-semibold text-[#333333] mb-1">
-                  YouTube / External Video Link (Optional)
+                  YouTube Video Link (Auto-generates thumbnail if no image is uploaded)
                 </label>
                 <input
                   type="url"
                   name="video_url"
+                  value={newVideoUrl}
+                  onChange={(e) => {
+                    setNewVideoUrl(e.target.value);
+                    if (!newImagePreview) {
+                      const { thumbnailUrl } = parseYouTubeUrl(e.target.value);
+                      if (thumbnailUrl) setNewImagePreview(thumbnailUrl);
+                    }
+                  }}
                   placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
                 />
@@ -438,7 +545,7 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
                   disabled={isSubmitting}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded disabled:opacity-50"
                 >
-                  {isSubmitting ? "Saving..." : "Add to Slideshow"}
+                  {isSubmitting ? "Uploading & Saving..." : "Add to Slideshow"}
                 </button>
               </div>
             </form>
@@ -501,12 +608,19 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
 
               <div>
                 <label className="block text-xs font-semibold text-[#333333] mb-1">
-                  YouTube / External Video Link (Optional)
+                  YouTube Video Link
                 </label>
                 <input
                   type="url"
                   name="video_url"
-                  defaultValue={editingSlide.video_url}
+                  value={editVideoUrl}
+                  onChange={(e) => {
+                    setEditVideoUrl(e.target.value);
+                    if (!editImagePreview) {
+                      const { thumbnailUrl } = parseYouTubeUrl(e.target.value);
+                      if (thumbnailUrl) setEditImagePreview(thumbnailUrl);
+                    }
+                  }}
                   className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
                 />
               </div>
