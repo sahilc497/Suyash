@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Plus, Edit2, Trash2, Video, Image as ImageIcon, Save, Check, X, ExternalLink, Upload, Film } from "lucide-react";
 
 interface SlideItem {
@@ -19,34 +20,31 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
   const [editingSlide, setEditingSlide] = useState<SlideItem | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // File upload state for new slide
   const [newImagePreview, setNewImagePreview] = useState<string>("/slideshow/slide1.png");
   const [editImagePreview, setEditImagePreview] = useState<string>("");
 
-  // Load saved slides from localStorage if available
+  // Sync slides from Supabase DB on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("buildpulse_slideshow_slides");
-      if (stored) {
-        setSlides(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    const syncSlides = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("slideshow_slides")
+          .select("*")
+          .order("display_order", { ascending: true });
 
-  const saveSlides = (newSlides: SlideItem[]) => {
-    setSlides(newSlides);
-    try {
-      localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify(newSlides));
-      window.dispatchEvent(new Event("slideshow_updated"));
-    } catch (e) {
-      console.error(e);
-    }
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2500);
-  };
+        if (data && data.length > 0) {
+          setSlides(data as SlideItem[]);
+        }
+      } catch (e) {
+        console.error("Failed to sync slides from Supabase:", e);
+      }
+    };
+    syncSlides();
+  }, []);
 
   // Convert uploaded image file to Data URL
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
@@ -65,61 +63,162 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
     reader.readAsDataURL(file);
   };
 
-  const handleCreateSlide = (e: React.FormEvent<HTMLFormElement>) => {
+  // Create Slide in Supabase DB
+  const handleCreateSlide = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     
     const finalImageUrl = newImagePreview || (formData.get("image_url_fallback") as string) || "/slideshow/slide1.png";
+    const title = formData.get("title") as string || "New Build Slide";
+    const description = formData.get("description") as string || "";
+    const category = formData.get("category") as string || "EMBEDDED HARDWARE";
+    const video_url = formData.get("video_url") as string || "";
 
-    const newSlide: SlideItem = {
-      id: Date.now().toString(),
-      title: formData.get("title") as string || "New Build Slide",
-      description: formData.get("description") as string || "",
-      category: formData.get("category") as string || "EMBEDDED HARDWARE",
-      image_url: finalImageUrl,
-      video_url: formData.get("video_url") as string || "",
-      display_order: slides.length + 1,
-      is_active: true,
-    };
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("slideshow_slides")
+      .insert({
+        title,
+        description,
+        category,
+        image_url: finalImageUrl,
+        video_url,
+        display_order: slides.length + 1,
+        is_active: true,
+      })
+      .select()
+      .single();
 
-    const updated = [...slides, newSlide];
-    saveSlides(updated);
+    if (error) {
+      console.error("Error inserting slide in Supabase:", error);
+      const fallbackSlide: SlideItem = {
+        id: Date.now().toString(),
+        title,
+        description,
+        category,
+        image_url: finalImageUrl,
+        video_url,
+        display_order: slides.length + 1,
+        is_active: true,
+      };
+      setSlides([...slides, fallbackSlide]);
+    } else if (data) {
+      setSlides([...slides, data as SlideItem]);
+    }
+
+    try {
+      localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify(slides));
+      window.dispatchEvent(new Event("slideshow_updated"));
+    } catch (err) {
+      console.error(err);
+    }
+
+    setIsSubmitting(false);
     setIsNewModalOpen(false);
     setNewImagePreview("/slideshow/slide1.png");
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleUpdateSlide = (e: React.FormEvent<HTMLFormElement>) => {
+  // Update Slide in Supabase DB
+  const handleUpdateSlide = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingSlide) return;
+    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     const finalImageUrl = editImagePreview || editingSlide.image_url;
+    const title = formData.get("title") as string || editingSlide.title;
+    const description = formData.get("description") as string || editingSlide.description;
+    const category = formData.get("category") as string || editingSlide.category;
+    const video_url = formData.get("video_url") as string || editingSlide.video_url;
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("slideshow_slides")
+      .update({
+        title,
+        description,
+        category,
+        image_url: finalImageUrl,
+        video_url,
+      })
+      .eq("id", editingSlide.id);
+
+    if (error) {
+      console.error("Error updating slide in Supabase:", error);
+    }
 
     const updatedSlide: SlideItem = {
       ...editingSlide,
-      title: formData.get("title") as string || editingSlide.title,
-      description: formData.get("description") as string || editingSlide.description,
-      category: formData.get("category") as string || editingSlide.category,
+      title,
+      description,
+      category,
       image_url: finalImageUrl,
-      video_url: formData.get("video_url") as string || editingSlide.video_url,
+      video_url,
     };
 
-    const updated = slides.map(s => s.id === editingSlide.id ? updatedSlide : s);
-    saveSlides(updated);
+    const updatedList = slides.map(s => s.id === editingSlide.id ? updatedSlide : s);
+    setSlides(updatedList);
+
+    try {
+      localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify(updatedList));
+      window.dispatchEvent(new Event("slideshow_updated"));
+    } catch (err) {
+      console.error(err);
+    }
+
+    setIsSubmitting(false);
     setEditingSlide(null);
     setEditImagePreview("");
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleDeleteSlide = (id: string) => {
+  // Delete Slide from Supabase DB
+  const handleDeleteSlide = async (id: string) => {
     if (confirm("Are you sure you want to remove this slide from the hero slideshow?")) {
-      const updated = slides.filter(s => s.id !== id);
-      saveSlides(updated);
+      const supabase = createClient();
+      await supabase.from("slideshow_slides").delete().eq("id", id);
+
+      const updatedList = slides.filter(s => s.id !== id);
+      setSlides(updatedList);
+
+      try {
+        localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify(updatedList));
+        window.dispatchEvent(new Event("slideshow_updated"));
+      } catch (err) {
+        console.error(err);
+      }
+
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
     }
   };
 
-  const toggleActive = (id: string) => {
-    const updated = slides.map(s => s.id === id ? { ...s, is_active: !s.is_active } : s);
-    saveSlides(updated);
+  // Toggle Active Slide in Supabase DB
+  const toggleActive = async (id: string) => {
+    const slideToToggle = slides.find(s => s.id === id);
+    if (!slideToToggle) return;
+
+    const newActiveState = !slideToToggle.is_active;
+
+    const supabase = createClient();
+    await supabase
+      .from("slideshow_slides")
+      .update({ is_active: newActiveState })
+      .eq("id", id);
+
+    const updatedList = slides.map(s => s.id === id ? { ...s, is_active: newActiveState } : s);
+    setSlides(updatedList);
+
+    try {
+      localStorage.setItem("buildpulse_slideshow_slides", JSON.stringify(updatedList));
+      window.dispatchEvent(new Event("slideshow_updated"));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -144,56 +243,68 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
           }}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
         >
-          <Plus className="h-4 w-4" /> Upload New Build Photo
+          <Plus className="h-4 w-4" /> Add New Build Slide
         </button>
       </div>
 
-      {/* Slides Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {slides.map((slide, index) => (
-          <div key={slide.id} className="bg-white border border-[#dddddd] rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+      {/* Slides List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {slides.map((slide) => (
+          <div 
+            key={slide.id} 
+            className={`bg-white border rounded-xl overflow-hidden shadow-xs flex flex-col justify-between transition-all ${
+              slide.is_active ? "border-[#dddddd]" : "border-red-200 bg-red-50/20 opacity-75"
+            }`}
+          >
             <div>
-              {/* Image Preview */}
-              <div className="relative aspect-video bg-slate-900 border-b border-[#eeeeee] overflow-hidden">
-                <img
-                  src={slide.image_url}
-                  alt={slide.title}
+              {/* Image Preview Banner */}
+              <div className="relative h-44 bg-[#111111] overflow-hidden">
+                <img 
+                  src={slide.image_url} 
+                  alt={slide.title} 
                   className="w-full h-full object-cover"
                 />
-                <span className="absolute top-3 left-3 px-3 py-1 bg-blue-600 text-white text-xs font-mono font-bold rounded-full uppercase tracking-wider shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                
+                <span className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] uppercase tracking-wider font-mono font-bold px-2.5 py-1 rounded">
                   {slide.category}
                 </span>
-                <span className="absolute top-3 right-3 px-2.5 py-1 bg-black/70 text-white text-xs font-mono rounded-full">
-                  Slide {index + 1}
-                </span>
+
+                <div className="absolute bottom-3 left-3 right-3 text-white">
+                  <h3 className="font-bold text-base line-clamp-1">{slide.title}</h3>
+                </div>
               </div>
 
-              {/* Slide Info */}
-              <div className="p-5 space-y-2">
-                <h3 className="font-bold text-lg text-[#111111] leading-snug">{slide.title}</h3>
-                <p className="text-sm text-[#666666] line-clamp-2">{slide.description}</p>
-                
+              {/* Description Body */}
+              <div className="p-4 space-y-2">
+                <p className="text-xs text-[#555555] line-clamp-2 leading-relaxed">
+                  {slide.description}
+                </p>
+
                 {slide.video_url && (
-                  <a
-                    href={slide.video_url}
-                    target="_blank"
-                    className="inline-flex items-center gap-1.5 text-xs text-red-600 font-semibold hover:underline pt-1"
+                  <a 
+                    href={slide.video_url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:underline font-medium pt-1"
                   >
-                    <Film className="h-3.5 w-3.5" /> Video Link Attached <ExternalLink className="h-3 w-3" />
+                    <Video className="h-3.5 w-3.5" /> Watch Video <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
               </div>
             </div>
 
-            {/* Slide Action Buttons */}
-            <div className="p-4 bg-[#f8f9fa] border-t border-[#eeeeee] flex items-center justify-between gap-2">
+            {/* Action Bar */}
+            <div className="p-3 bg-[#fafafa] border-t border-[#eeeeee] flex items-center justify-between">
               <button
-                onClick={() => toggleActive(slide.id)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-semibold cursor-pointer ${
-                  slide.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+                onClick={() => toggleActive(slide.id.toString())}
+                className={`text-xs font-semibold px-2.5 py-1 rounded cursor-pointer transition-colors ${
+                  slide.is_active 
+                    ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" 
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
-                {slide.is_active ? "✓ Active on Hero" : "Hidden"}
+                {slide.is_active ? "● Active on Hero" : "○ Hidden"}
               </button>
 
               <div className="flex items-center gap-2">
@@ -202,14 +313,14 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
                     setEditingSlide(slide);
                     setEditImagePreview(slide.image_url);
                   }}
-                  className="p-2 text-slate-700 hover:text-blue-600 hover:bg-white rounded-lg transition-colors border border-[#dddddd] cursor-pointer"
+                  className="p-1.5 text-[#555555] hover:text-[#111111] hover:bg-[#eeeeee] rounded transition-colors cursor-pointer"
                   title="Edit Slide"
                 >
                   <Edit2 className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleDeleteSlide(slide.id)}
-                  className="p-2 text-slate-700 hover:text-red-600 hover:bg-white rounded-lg transition-colors border border-[#dddddd] cursor-pointer"
+                  onClick={() => handleDeleteSlide(slide.id.toString())}
+                  className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors cursor-pointer"
                   title="Delete Slide"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -220,106 +331,114 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
         ))}
       </div>
 
-      {/* Modal: Upload New Slide & Image */}
+      {/* NEW SLIDE MODAL */}
       {isNewModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-[#dddddd] space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-[#dddddd]">
             <div className="flex justify-between items-center pb-3 border-b border-[#eeeeee]">
-              <h2 className="text-xl font-bold text-[#111111]">Upload New Build Slide</h2>
-              <button onClick={() => setIsNewModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+              <h2 className="text-lg font-bold text-[#111111] flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-blue-600" /> Add Hero Build Slide
+              </h2>
+              <button onClick={() => setIsNewModalOpen(false)} className="text-[#888888] hover:text-[#111111]">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateSlide} className="space-y-4">
-              {/* Direct File Picker */}
               <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">
-                  Upload Image File from Device
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Slide Title *
                 </label>
-                <div className="border-2 border-dashed border-blue-400/60 rounded-xl p-4 text-center bg-blue-50/50 hover:bg-blue-50 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, false)}
-                    className="hidden"
-                    id="new-image-file-input"
-                  />
-                  <label htmlFor="new-image-file-input" className="cursor-pointer flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-blue-600" />
-                    <span className="text-sm font-semibold text-blue-600">Choose Image File (JPG, PNG, WEBP)</span>
-                    <span className="text-xs text-slate-500">Click to select photo from computer</span>
-                  </label>
-                </div>
+                <input
+                  type="text"
+                  name="title"
+                  required
+                  placeholder="e.g. ESP32 Handheld Gaming Console"
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
               </div>
 
-              {/* Uploaded Image Live Preview */}
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Category Tag *
+                </label>
+                <input
+                  type="text"
+                  name="category"
+                  defaultValue="EMBEDDED HARDWARE"
+                  required
+                  placeholder="e.g. EMBEDDED HARDWARE, AUTONOMOUS ROBOTICS"
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Short Description *
+                </label>
+                <textarea
+                  name="description"
+                  rows={2}
+                  required
+                  placeholder="Brief summary of the build showcase..."
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  YouTube / External Video Link (Optional)
+                </label>
+                <input
+                  type="url"
+                  name="video_url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Upload Slide Banner Image OR Paste URL
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, false)}
+                  className="w-full text-xs p-2 border border-[#cccccc] rounded bg-[#fafafa] mb-2"
+                />
+                <input
+                  type="text"
+                  name="image_url_fallback"
+                  placeholder="Or enter image URL (e.g. /slideshow/slide1.png)"
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              {/* Preview */}
               {newImagePreview && (
-                <div>
-                  <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Selected Image Preview</label>
-                  <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-[#dddddd]">
-                    <img src={newImagePreview} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
+                <div className="h-32 bg-[#111111] rounded overflow-hidden relative">
+                  <img src={newImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
+                    Image Preview
+                  </span>
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Project / Slide Title</label>
-                <input
-                  name="title"
-                  type="text"
-                  required
-                  placeholder="e.g. Autonomous Mobile Rover"
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Category Tag</label>
-                <input
-                  name="category"
-                  type="text"
-                  required
-                  placeholder="e.g. ROBOTICS & EDGE AI"
-                  defaultValue="EMBEDDED HARDWARE"
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Description</label>
-                <textarea
-                  name="description"
-                  rows={3}
-                  required
-                  placeholder="Describe key specs, microcontrollers, or features..."
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">YouTube or Instagram Video Link (Optional)</label>
-                <input
-                  name="video_url"
-                  type="url"
-                  placeholder="https://www.youtube.com/watch?v=... or Instagram Reel Link"
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-[#eeeeee]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#eeeeee]">
                 <button
                   type="button"
                   onClick={() => setIsNewModalOpen(false)}
-                  className="px-4 py-2 border border-[#cccccc] rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="px-4 py-2 border border-[#cccccc] text-xs font-medium rounded hover:bg-[#eeeeee]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded disabled:opacity-50"
                 >
-                  Upload & Save Slide
+                  {isSubmitting ? "Saving..." : "Add to Slideshow"}
                 </button>
               </div>
             </form>
@@ -327,101 +446,107 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
         </div>
       )}
 
-      {/* Modal: Edit Slide & Replace Image */}
+      {/* EDIT SLIDE MODAL */}
       {editingSlide && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-[#dddddd] space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-[#dddddd]">
             <div className="flex justify-between items-center pb-3 border-b border-[#eeeeee]">
-              <h2 className="text-xl font-bold text-[#111111]">Edit Build Slide & Photo</h2>
-              <button onClick={() => setEditingSlide(null)} className="text-slate-400 hover:text-slate-700">
+              <h2 className="text-lg font-bold text-[#111111] flex items-center gap-2">
+                <Edit2 className="h-5 w-5 text-blue-600" /> Edit Hero Build Slide
+              </h2>
+              <button onClick={() => setEditingSlide(null)} className="text-[#888888] hover:text-[#111111]">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleUpdateSlide} className="space-y-4">
-              {/* Replace Image File Input */}
               <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">
-                  Replace Image File
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Slide Title *
                 </label>
-                <div className="border-2 border-dashed border-blue-400/60 rounded-xl p-3 text-center bg-blue-50/50 hover:bg-blue-50 transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, true)}
-                    className="hidden"
-                    id="edit-image-file-input"
-                  />
-                  <label htmlFor="edit-image-file-input" className="cursor-pointer flex items-center justify-center gap-2 text-blue-600 font-semibold text-sm">
-                    <Upload className="h-4 w-4" /> Click to Select Replacement Image
-                  </label>
-                </div>
+                <input
+                  type="text"
+                  name="title"
+                  defaultValue={editingSlide.title}
+                  required
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
               </div>
 
-              {/* Current / New Image Preview */}
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Category Tag *
+                </label>
+                <input
+                  type="text"
+                  name="category"
+                  defaultValue={editingSlide.category}
+                  required
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Short Description *
+                </label>
+                <textarea
+                  name="description"
+                  rows={2}
+                  defaultValue={editingSlide.description}
+                  required
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  YouTube / External Video Link (Optional)
+                </label>
+                <input
+                  type="url"
+                  name="video_url"
+                  defaultValue={editingSlide.video_url}
+                  className="w-full text-xs p-2.5 border border-[#cccccc] rounded focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#333333] mb-1">
+                  Replace Slide Banner Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, true)}
+                  className="w-full text-xs p-2 border border-[#cccccc] rounded bg-[#fafafa]"
+                />
+              </div>
+
+              {/* Preview */}
               {(editImagePreview || editingSlide.image_url) && (
-                <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-[#dddddd]">
+                <div className="h-32 bg-[#111111] rounded overflow-hidden relative">
                   <img src={editImagePreview || editingSlide.image_url} alt="Preview" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
+                    Current Image Preview
+                  </span>
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Slide Title</label>
-                <input
-                  name="title"
-                  type="text"
-                  defaultValue={editingSlide.title}
-                  required
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Category Tag</label>
-                <input
-                  name="category"
-                  type="text"
-                  defaultValue={editingSlide.category}
-                  required
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">Description</label>
-                <textarea
-                  name="description"
-                  rows={3}
-                  defaultValue={editingSlide.description}
-                  required
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#444444] uppercase mb-1">YouTube or Instagram Video Link</label>
-                <input
-                  name="video_url"
-                  type="url"
-                  defaultValue={editingSlide.video_url}
-                  placeholder="https://www.youtube.com/watch?v=... or Instagram Reel URL"
-                  className="w-full p-3 border border-[#cccccc] rounded-lg text-sm focus:outline-blue-600"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3 border-t border-[#eeeeee]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#eeeeee]">
                 <button
                   type="button"
                   onClick={() => setEditingSlide(null)}
-                  className="px-4 py-2 border border-[#cccccc] rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="px-4 py-2 border border-[#cccccc] text-xs font-medium rounded hover:bg-[#eeeeee]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg flex items-center gap-1.5"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded disabled:opacity-50"
                 >
-                  <Save className="h-4 w-4" /> Save Changes
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
@@ -432,4 +557,3 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
     </div>
   );
 }
-
