@@ -127,20 +127,20 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
       if (uploadedUrl) finalImageUrl = uploadedUrl;
     }
 
-    // 2. Try Data URL preview if storage upload wasn't used
-    if (!finalImageUrl && newImagePreview) {
-      finalImageUrl = newImagePreview;
-    }
-
-    // 3. Try typed fallback image URL
+    // 2. Try typed fallback image URL
     if (!finalImageUrl && fallbackUrl) {
       finalImageUrl = fallbackUrl;
     }
 
-    // 4. Auto grab YouTube thumbnail if video URL is provided
+    // 3. Auto grab YouTube thumbnail if video URL is provided
     if (!finalImageUrl && video_url) {
       const { thumbnailUrl } = parseYouTubeUrl(video_url);
       if (thumbnailUrl) finalImageUrl = thumbnailUrl;
+    }
+
+    // 4. Try Data URL preview if short enough (< 100KB)
+    if (!finalImageUrl && newImagePreview && newImagePreview.length < 100000) {
+      finalImageUrl = newImagePreview;
     }
 
     // 5. Final fallback default image
@@ -444,6 +444,11 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
             </div>
 
             <form onSubmit={handleCreateSlide} className="space-y-4">
+              {errorMessage && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-medium">
+                  {errorMessage}
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-[#333333] mb-1">
                   Slide Title *
