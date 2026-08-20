@@ -58,15 +58,15 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
   return (
     <div className="space-y-8">
       
-      {/* Category Filter Tabs Bar */}
-      <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-slate-200">
+      {/* Category Filter Tabs Bar (Horizontally swipeable on mobile screens) */}
+      <div className="flex items-center gap-2 pb-3 border-b border-slate-200 overflow-x-auto scrollbar-none flex-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
         {CATEGORIES.map((cat) => {
           const isActive = selectedCategory === cat;
           return (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 whitespace-nowrap ${
                 isActive
                   ? "bg-steel-blue text-white shadow-sm shadow-steel-blue/25 scale-[1.02]"
                   : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200"

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
@@ -21,6 +23,7 @@ const LinkedinIcon = ({ className }: { className?: string }) => (
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -31,25 +34,25 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="w-full bg-white/95 backdrop-blur-md sticky top-0 z-50 py-4 border-b border-slate-200/80 shadow-2xs">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between gap-6">
+    <header className="w-full bg-white/95 backdrop-blur-md sticky top-0 z-50 py-3.5 sm:py-4 border-b border-slate-200/80 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between gap-4">
         
         {/* Brand / Logo Section */}
-        <Link href="/" className="flex items-center gap-3.5 group">
-          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform p-1">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform p-1">
             <img src="/logo.png" alt="S.D Creation Logo" className="w-full h-full object-contain" />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-base md:text-xl text-[#0f172a] leading-none tracking-tight group-hover:text-steel-blue transition-colors">
+            <span className="font-extrabold text-base sm:text-lg md:text-xl text-[#0f172a] leading-none tracking-tight group-hover:text-steel-blue transition-colors">
               Suyash Desai
             </span>
-            <span className="text-[12px] text-cool-slate font-medium tracking-wide mt-0.5">
+            <span className="text-[10px] sm:text-[12px] text-cool-slate font-medium tracking-wide mt-0.5">
               Electronics • Robotics • IoT
             </span>
           </div>
         </Link>
         
-        {/* Center Navigation Links (Increased font size text-[16px]) */}
+        {/* Desktop Center Navigation Links */}
         <nav className="hidden lg:flex items-center gap-8 text-[16px] font-semibold">
           {navLinks.map((link) => {
             const isActive = link.href === "/" 
@@ -75,8 +78,8 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* Right Section: Social Icons (Increased icon size to h-5 w-5) */}
-        <div className="flex items-center gap-4">
+        {/* Right Section: Desktop Social Icons + Mobile Menu Toggle */}
+        <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-3.5 text-cool-slate">
             <Link 
               href="https://github.com/astrix884" 
@@ -111,9 +114,61 @@ export default function Navbar() {
               <LinkedinIcon className="h-5 w-5" />
             </Link>
           </div>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
 
       </div>
+
+      {/* Mobile Drawer Dropdown */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-4 shadow-xl animate-in slide-in-from-top duration-200">
+          <nav className="flex flex-col space-y-3 font-semibold text-base">
+            {navLinks.map((link) => {
+              const isActive = link.href === "/" 
+                ? pathname === "/" 
+                : pathname.startsWith(link.href);
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`py-2 px-3 rounded-xl transition-all ${
+                    isActive
+                      ? "bg-blue-50 text-steel-blue font-bold"
+                      : "text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-around text-cool-slate">
+            <Link href="https://github.com/astrix884" target="_blank" className="hover:text-[#0f172a] p-2">
+              <GithubIcon className="h-5 w-5" />
+            </Link>
+            <Link href="https://www.youtube.com/@IdeasbySuyashDesai" target="_blank" className="hover:text-[#0f172a] p-2">
+              <YoutubeIcon className="h-5 w-5" />
+            </Link>
+            <Link href="https://www.instagram.com/ideas_by_suyash" target="_blank" className="hover:text-[#0f172a] p-2">
+              <InstagramIcon className="h-5 w-5" />
+            </Link>
+            <Link href="https://www.linkedin.com/in/suyash-desai-659473270" target="_blank" className="hover:text-[#0f172a] p-2">
+              <LinkedinIcon className="h-5 w-5" />
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
