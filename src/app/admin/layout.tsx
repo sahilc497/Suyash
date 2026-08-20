@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, FolderKanban, FileText, Video, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileText, Video, Settings, LogOut, Wrench } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -22,6 +22,12 @@ export default function AdminLayout({
           </Link>
           <Link href="/admin/projects" className="flex items-center gap-3 px-3 py-2 rounded text-[#cccccc] hover:bg-[#222222] hover:text-white transition-colors">
             <FolderKanban className="h-5 w-5" /> Projects
+          </Link>
+          <Link href="/admin/slideshow" className="flex items-center gap-3 px-3 py-2 rounded text-[#cccccc] hover:bg-[#222222] hover:text-white transition-colors">
+            <Video className="h-5 w-5" /> Hero Slideshow
+          </Link>
+          <Link href="/admin/tools" className="flex items-center gap-3 px-3 py-2 rounded text-[#cccccc] hover:bg-[#222222] hover:text-white transition-colors">
+            <Wrench className="h-5 w-5" /> Recommended Tools
           </Link>
           <Link href="/admin/articles" className="flex items-center gap-3 px-3 py-2 rounded text-[#cccccc] hover:bg-[#222222] hover:text-white transition-colors">
             <FileText className="h-5 w-5" /> Articles

@@ -26,8 +26,8 @@ export default async function ProjectPage({ params }: PageProps) {
   }
 
   return (
-    <div className="w-full bg-[#fcfcfc] text-[#333333] min-h-screen py-12">
-      <div className="max-w-[800px] mx-auto px-6">
+    <div className="w-full bg-transparent text-gray-100 min-h-screen py-12">
+      <div className="max-w-200 mx-auto px-6">
         <Link href="/projects" className="inline-block mb-8 text-[#666666] hover:text-[#111111] transition-colors">
           ← Back to Projects
         </Link>

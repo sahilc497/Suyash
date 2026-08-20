@@ -7,30 +7,30 @@ import SponsorForm from "@/components/SponsorForm";
 
 export default function AboutPage() {
   return (
-    <div className="w-full bg-[#fcfcfc] text-[#333333] min-h-screen py-12">
-      <div className="max-w-[800px] mx-auto px-6">
-        <h1 className="text-3xl font-bold text-[#111111] mb-8">About</h1>
+    <div className="w-full bg-transparent text-slate-900 min-h-screen py-12">
+      <div className="max-w-200 mx-auto px-6">
+        <h1 className="text-3xl font-bold text-slate-900 mb-8 font-orbitron">About</h1>
         
-        <div className="prose prose-zinc max-w-none prose-p:text-[#444444] prose-headings:text-[#111111]">
-          <div className="md:float-left md:mr-8 mb-6 md:mb-2 w-full md:w-64 aspect-square bg-[#eeeeee] border border-[#dddddd] overflow-hidden">
+        <div className="prose prose-zinc max-w-none bg-white/90 p-8 rounded-2xl border border-cyan-600/20 shadow-sm backdrop-blur-md">
+          <div className="md:float-left md:mr-8 mb-6 md:mb-2 w-full md:w-64 aspect-square bg-slate-100 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <img src="/profile.png" alt="Suyash Desai" className="w-full h-full object-cover" />
           </div>
-          <p className="text-[17px] leading-relaxed mb-6">
+          <p className="text-[17px] text-slate-700 leading-relaxed mb-6">
             I'm <strong>Suyash Desai</strong>, a hardware engineer and creator. My work focuses on 
             bridging the gap between low-level electronics and high-level software. I build systems 
             that interact with the physical world—from custom flight controllers and autonomous 
             navigation robots to embedded AI systems.
           </p>
           
-          <h2 className="text-2xl font-semibold mt-10 mb-4">The Laboratory</h2>
-          <p className="text-[17px] leading-relaxed mb-6">
+          <h2 className="text-2xl font-semibold text-slate-900 mt-10 mb-4 font-orbitron">The Laboratory</h2>
+          <p className="text-[17px] text-slate-700 leading-relaxed mb-6">
             Everything you see here is designed, prototyped, and built in my personal lab. My setup 
             includes a mix of traditional electronics test equipment (oscilloscopes, logic analyzers) 
             and digital fabrication tools (3D printers, CNC routers, and PCB milling).
           </p>
 
-          <h2 className="text-2xl font-semibold mt-10 mb-4">Why BuildPulse?</h2>
-          <p className="text-[17px] leading-relaxed mb-6">
+          <h2 className="text-2xl font-semibold text-slate-900 mt-10 mb-4 font-orbitron">Why BuildPulse?</h2>
+          <p className="text-[17px] text-slate-700 leading-relaxed mb-6">
             I built this site to serve as a proper engineering wiki for my projects. While YouTube 
             is great for storytelling, it's terrible for documentation. Here, you'll find the 
             actual schematics, source code, bill of materials (BOM), and step-by-step build logs 

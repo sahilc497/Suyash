@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" fill="none">
+  <!-- Pure Black Base -->
+  <rect width="800" height="800" fill="#000000" />
+
+  <!-- Subtly Textured Monochromatic Circuit Grid -->
+  <pattern id="pcb-grid-gray" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#525252" stroke-width="0.5" stroke-opacity="0.15" />
+  </pattern>
+  <rect width="800" height="800" fill="url(#pcb-grid-gray)" />
+
+  <!-- Monochromatic Gray Circuit Traces - Primary Layer (#737373) -->
+  <g stroke="#737373" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.45">
+    <path d="M 40 80 L 200 80 L 260 140 L 480 140" />
+    <path d="M 120 40 L 120 180 L 160 220 L 320 220" />
+    <path d="M 300 40 L 380 120 L 380 280 L 520 280" />
+    <path d="M 600 40 L 600 160 L 660 220 L 760 220" />
+    <path d="M 40 320 L 140 320 L 220 400 L 220 540" />
+    <path d="M 160 480 L 320 480 L 380 540 L 580 540" />
+    <path d="M 480 320 L 580 420 L 740 420" />
+    <path d="M 40 640 L 180 640 L 240 700 L 440 700" />
+    <path d="M 360 600 L 460 700 L 620 700 L 680 760" />
+    <path d="M 520 460 L 640 460 L 720 540 L 760 540" />
+  </g>
+
+  <!-- Light Gray Circuit Traces - Secondary Layer (#a3a3a3) -->
+  <g stroke="#a3a3a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.35">
+    <path d="M 80 120 L 180 120 L 220 160 L 220 300" />
+    <path d="M 240 60 L 300 120 L 440 120 L 500 180" />
+    <path d="M 540 80 L 660 80 L 720 140 L 720 260" />
+    <path d="M 80 400 L 180 400 L 240 460 L 240 600" />
+    <path d="M 280 340 L 400 340 L 460 400 L 660 400" />
+    <path d="M 580 240 L 640 300 L 760 300" />
+    <path d="M 100 720 L 220 720 L 280 660 L 500 660" />
+    <path d="M 460 500 L 540 580 L 740 580" />
+  </g>
+
+  <!-- Subtle Gray Via Nodes (#d4d4d4) -->
+  <g fill="#d4d4d4" opacity="0.5">
+    <circle cx="40" cy="80" r="4" />
+    <circle cx="480" cy="140" r="4" />
+    <circle cx="120" cy="40" r="4" />
+    <circle cx="320" cy="220" r="4" />
+    <circle cx="300" cy="40" r="4" />
+    <circle cx="520" cy="280" r="4" />
+    <circle cx="600" cy="40" r="4" />
+    <circle cx="760" cy="220" r="4" />
+    <circle cx="40" cy="320" r="4" />
+    <circle cx="220" cy="540" r="4" />
+    <circle cx="580" cy="540" r="4" />
+    <circle cx="740" cy="420" r="4" />
+    <circle cx="40" cy="640" r="4" />
+    <circle cx="440" cy="700" r="4" />
+    <circle cx="760" cy="540" r="4" />
+  </g>
+
+  <!-- Dark Microchip Package -->
+  <g fill="#171717" stroke="#404040" stroke-width="2" opacity="0.75">
+    <rect x="350" y="170" width="80" height="80" rx="6" />
+    <path d="M 365 155 L 365 170 M 380 155 L 380 170 M 395 155 L 395 170 M 415 155 L 415 170" stroke="#737373" stroke-width="2"/>
+    <path d="M 365 250 L 365 265 M 380 250 L 380 265 M 395 250 L 395 265 M 415 250 L 415 265" stroke="#737373" stroke-width="2"/>
+    <path d="M 335 185 L 350 185 M 335 200 L 350 200 M 335 215 L 350 215 M 335 235 L 350 235" stroke="#737373" stroke-width="2"/>
+    <path d="M 430 185 L 445 185 M 430 200 L 445 200 M 430 215 L 445 215 M 430 235 L 445 235" stroke="#737373" stroke-width="2"/>
+    <circle cx="366" cy="186" r="3" fill="#a3a3a3" />
+  </g>
+</svg>

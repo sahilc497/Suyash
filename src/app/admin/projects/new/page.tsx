@@ -13,6 +13,7 @@ export default function NewProjectPage() {
     title: "",
     slug: "",
     short_description: "",
+    category: "Arduino & ESP32",
     content: "",
     difficulty: "Intermediate",
     status: "In Progress",
@@ -56,6 +57,7 @@ export default function NewProjectPage() {
       title: formData.title,
       slug: formData.slug,
       short_description: formData.short_description,
+      category: formData.category,
       content: formData.content,
       difficulty: formData.difficulty,
       status: formData.status,
@@ -161,7 +163,22 @@ export default function NewProjectPage() {
         </div>
 
         <div className="flex flex-wrap gap-6 p-6 border border-[#dddddd] bg-white">
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-50">
+            <label className="block text-sm font-semibold text-[#333333] mb-1">Category Section</label>
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="w-full px-3 py-2 border border-[#cccccc] focus:outline-none font-medium"
+            >
+              <option value="Arduino & ESP32">Arduino & ESP32</option>
+              <option value="IoT">IoT</option>
+              <option value="Embedded Systems">Embedded Systems</option>
+              <option value="ECE">ECE</option>
+              <option value="Robotics & Automation">Robotics & Automation</option>
+            </select>
+          </div>
+
+          <div className="flex-1 min-w-50">
             <label className="block text-sm font-semibold text-[#333333] mb-1">Status</label>
             <select
               value={formData.status}
@@ -175,7 +192,7 @@ export default function NewProjectPage() {
             </select>
           </div>
           
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-50">
             <label className="block text-sm font-semibold text-[#333333] mb-1">Difficulty</label>
             <select
               value={formData.difficulty}
@@ -189,7 +206,7 @@ export default function NewProjectPage() {
             </select>
           </div>
           
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-50">
             <label className="block text-sm font-semibold text-[#333333] mb-1">Progress (%)</label>
             <input
               type="number"

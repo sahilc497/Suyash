@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { Search, Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
@@ -9,48 +11,109 @@ const YoutubeIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 7.1C2.6 5.9 3.5 5 4.7 4.8 8.1 4.3 15.9 4.3 19.3 4.8 20.5 5 21.4 5.9 21.5 7.1 21.8 9.3 21.8 14.7 21.5 16.9 21.4 18.1 20.5 19 19.3 19.2 15.9 19.7 8.1 19.7 4.7 19.2 3.5 19 2.6 18.1 2.5 16.9 2.2 14.7 2.2 9.3 2.5 7.1z"/><path d="m10 15 5-3-5-3z"/></svg>
 );
 
-const XIcon = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l11.733 16h4.267l-11.733 -16z"/><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"/></svg>
+const GithubIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+);
+
+const LinkedinIcon = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
 );
 
 export default function Navbar() {
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: "/", label: "Home" },
+    { href: "/projects", label: "Projects" },
+    { href: "/videos", label: "Videos" },
+    { href: "/articles", label: "Articles" },
+    { href: "/about", label: "About" },
+  ];
+
   return (
-    <div 
-      className="w-full relative flex flex-col items-center justify-center bg-zinc-900 border-b-4 border-blue-600"
-      style={{
-        backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url("/header-bg.jpg")',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        padding: '3rem 1rem 1rem 1rem',
-      }}
-    >
-      {/* Title */}
-      <Link href="/">
-        <h1 className="text-white hover:text-gray-200 transition-colors text-5xl md:text-6xl font-bold tracking-tight mb-4 drop-shadow-md cursor-pointer">
-          Suyash Desai
-        </h1>
-      </Link>
-      
-      {/* Social Icons */}
-      <div className="flex items-center gap-6 mb-6">
-        <Link href="#" className="text-white hover:text-gray-300 transition-colors drop-shadow-sm">
-          <XIcon className="h-6 w-6" />
+    <header className="w-full bg-white/95 backdrop-blur-md sticky top-0 z-50 py-4 border-b border-slate-200/80 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between gap-6">
+        
+        {/* Brand / Logo Section */}
+        <Link href="/" className="flex items-center gap-3.5 group">
+          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform p-1">
+            <img src="/logo.png" alt="S.D Creation Logo" className="w-full h-full object-contain" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-base md:text-xl text-[#0f172a] leading-none tracking-tight group-hover:text-steel-blue transition-colors">
+              Suyash Desai
+            </span>
+            <span className="text-[12px] text-cool-slate font-medium tracking-wide mt-0.5">
+              Electronics • Robotics • IoT
+            </span>
+          </div>
         </Link>
-        <Link href="https://www.youtube.com/@IdeasbySuyashDesai" target="_blank" className="text-white hover:text-gray-300 transition-colors drop-shadow-sm">
-          <YoutubeIcon className="h-6 w-6" />
-        </Link>
-        <Link href="https://www.instagram.com/ideas_by_suyash" target="_blank" className="text-white hover:text-gray-300 transition-colors drop-shadow-sm">
-          <InstagramIcon className="h-6 w-6" />
-        </Link>
+        
+        {/* Center Navigation Links (Increased font size text-[16px]) */}
+        <nav className="hidden lg:flex items-center gap-8 text-[16px] font-semibold">
+          {navLinks.map((link) => {
+            const isActive = link.href === "/" 
+              ? pathname === "/" 
+              : pathname.startsWith(link.href);
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative py-1 transition-colors ${
+                  isActive
+                    ? "text-steel-blue font-extrabold"
+                    : "text-[#475569] hover:text-[#0f172a]"
+                }`}
+              >
+                {link.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-steel-blue rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right Section: Social Icons (Increased icon size to h-5 w-5) */}
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-3.5 text-cool-slate">
+            <Link 
+              href="https://github.com/astrix884" 
+              target="_blank" 
+              className="hover:text-[#0f172a] transition-colors p-1 hover:scale-110" 
+              aria-label="GitHub"
+            >
+              <GithubIcon className="h-5 w-5" />
+            </Link>
+            <Link 
+              href="https://www.youtube.com/@IdeasbySuyashDesai" 
+              target="_blank" 
+              className="hover:text-[#0f172a] transition-colors p-1 hover:scale-110" 
+              aria-label="YouTube"
+            >
+              <YoutubeIcon className="h-5 w-5" />
+            </Link>
+            <Link 
+              href="https://www.instagram.com/ideas_by_suyash" 
+              target="_blank" 
+              className="hover:text-[#0f172a] transition-colors p-1 hover:scale-110" 
+              aria-label="Instagram"
+            >
+              <InstagramIcon className="h-5 w-5" />
+            </Link>
+            <Link 
+              href="https://www.linkedin.com/in/suyash-desai-659473270" 
+              target="_blank" 
+              className="hover:text-[#0f172a] transition-colors p-1 hover:scale-110" 
+              aria-label="LinkedIn"
+            >
+              <LinkedinIcon className="h-5 w-5" />
+            </Link>
+          </div>
+        </div>
+
       </div>
-      
-      {/* Navigation Links */}
-      <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-white font-medium text-lg drop-shadow-sm">
-        <Link href="/projects" className="hover:text-blue-400 transition-colors">Projects</Link>
-        <Link href="/articles" className="hover:text-blue-400 transition-colors">Articles</Link>
-        <Link href="/videos" className="hover:text-blue-400 transition-colors">Videos</Link>
-        <Link href="/about" className="hover:text-blue-400 transition-colors">About</Link>
-      </div>
-    </div>
+    </header>
   );
 }
