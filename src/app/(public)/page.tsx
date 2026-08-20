@@ -68,35 +68,35 @@ export default async function Home() {
     <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans min-h-screen flex flex-col">
       
       {/* 1. HERO SECTION (Left Column: About Profile Card | Right Column: Hero Slideshow) */}
-      <section className="w-full max-w-7xl mx-auto px-6 md:px-12 pt-8 pb-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 pt-4 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
           
           {/* Left Column: About Suyash Profile Card */}
-          <div className="bg-white p-8 rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-full space-y-6">
-            <div className="flex flex-col sm:flex-row gap-6 items-start">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 bg-slate-100 border border-slate-200 rounded-2xl shrink-0 flex items-center justify-center overflow-hidden shadow-xs">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-4">
+            <div className="flex flex-col sm:flex-row gap-5 items-start">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-100 border border-slate-200 rounded-2xl shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
                 <img src="/profile.png" alt="Suyash Desai" className="w-full h-full object-cover" />
               </div>
               
-              <div className="flex-1 space-y-3">
+              <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-steel-blue animate-pulse" />
-                  <span className="font-mono text-xs text-steel-blue tracking-wider uppercase font-bold">HARDWARE & SYSTEMS ENGINEER</span>
+                  <span className="h-2 w-2 rounded-full bg-steel-blue animate-pulse" />
+                  <span className="font-mono text-[11px] text-steel-blue tracking-wider uppercase font-bold">HARDWARE & SYSTEMS ENGINEER</span>
                 </div>
                 
-                <h1 className="text-3xl md:text-4xl font-extrabold text-[#0f172a] tracking-tight font-heading">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight font-heading">
                   Suyash Desai
                 </h1>
                 
-                <p className="text-[15px] leading-relaxed text-cool-slate">
+                <p className="text-xs sm:text-sm leading-relaxed text-cool-slate">
                   I build technology in the real world. My work explores the intersection of hardware and software—from embedded systems and autonomous robotics to AI-powered edge computing devices.
                 </p>
                 
-                <div className="pt-2 flex flex-wrap items-center gap-3">
-                  <a href="#featured-projects" className="text-xs font-bold px-5 py-2.5 rounded-full bg-steel-blue hover:bg-blue-700 text-white transition-all flex items-center gap-2 shadow-sm shadow-steel-blue/25 hover:scale-[1.01]">
-                    Explore Builds <ChevronRight className="h-4 w-4 rotate-90" />
+                <div className="pt-1 flex flex-wrap items-center gap-2.5">
+                  <a href="#featured-projects" className="text-xs font-bold px-4 py-2 rounded-full bg-steel-blue hover:bg-blue-700 text-white transition-all flex items-center gap-1.5 shadow-2xs shadow-steel-blue/20 hover:scale-[1.01]">
+                    Explore Builds <ChevronRight className="h-3.5 w-3.5 rotate-90" />
                   </a>
-                  <Link href="/about" className="text-xs font-bold px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[#0f172a] transition-all border border-slate-200">
+                  <Link href="/about" className="text-xs font-bold px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-[#0f172a] transition-all border border-slate-200">
                     About Lab Setup →
                   </Link>
                 </div>
@@ -104,8 +104,8 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Right Column: Hero Slideshow */}
-          <div className="w-full h-full min-h-105 rounded-3xl overflow-hidden shadow-sm border border-slate-200/90 bg-slate-900">
+          {/* Right Column: Hero Slideshow (Compact sleek height) */}
+          <div className="w-full h-72 sm:h-80 rounded-2xl overflow-hidden shadow-2xs border border-slate-200/90 bg-slate-900">
             <HeroSlideshow />
           </div>
 
