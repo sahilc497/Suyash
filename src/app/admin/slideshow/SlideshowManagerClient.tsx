@@ -27,7 +27,7 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
   // Form previews
   const [newImagePreview, setNewImagePreview] = useState<string>("");
   const [newVideoUrl, setNewVideoUrl] = useState<string>("");
-  
+
   const [editImagePreview, setEditImagePreview] = useState<string>("");
   const [editVideoUrl, setEditVideoUrl] = useState<string>("");
 
@@ -312,7 +312,7 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
 
   return (
     <div className="space-y-6">
-      
+
       {/* Success Notification */}
       {savedSuccess && (
         <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-sm flex items-center gap-2 font-medium shadow-xs">
@@ -348,22 +348,21 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
       {/* Slides List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {slides.map((slide) => (
-          <div 
-            key={slide.id} 
-            className={`bg-white border rounded-xl overflow-hidden shadow-xs flex flex-col justify-between transition-all ${
-              slide.is_active ? "border-[#dddddd]" : "border-red-200 bg-red-50/20 opacity-75"
-            }`}
+          <div
+            key={slide.id}
+            className={`bg-white border rounded-xl overflow-hidden shadow-xs flex flex-col justify-between transition-all ${slide.is_active ? "border-[#dddddd]" : "border-red-200 bg-red-50/20 opacity-75"
+              }`}
           >
             <div>
               {/* Image Preview Banner */}
               <div className="relative h-44 bg-[#111111] overflow-hidden">
-                <img 
-                  src={slide.image_url || "/circuit-schematic.jpg"} 
-                  alt={slide.title} 
+                <img
+                  src={slide.image_url || "/circuit-schematic.jpg"}
+                  alt={slide.title}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
+
                 <span className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white text-[10px] uppercase tracking-wider font-mono font-bold px-2.5 py-1 rounded">
                   {slide.category}
                 </span>
@@ -380,10 +379,10 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
                 </p>
 
                 {slide.video_url && (
-                  <a 
-                    href={slide.video_url} 
-                    target="_blank" 
-                    rel="noreferrer" 
+                  <a
+                    href={slide.video_url}
+                    target="_blank"
+                    rel="noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:underline font-medium pt-1"
                   >
                     <Video className="h-3.5 w-3.5" /> Watch Video <ExternalLink className="h-3 w-3" />
@@ -396,11 +395,10 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
             <div className="p-3 bg-[#fafafa] border-t border-[#eeeeee] flex items-center justify-between">
               <button
                 onClick={() => toggleActive(slide.id.toString())}
-                className={`text-xs font-semibold px-2.5 py-1 rounded cursor-pointer transition-colors ${
-                  slide.is_active 
-                    ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" 
+                className={`text-xs font-semibold px-2.5 py-1 rounded cursor-pointer transition-colors ${slide.is_active
+                    ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
+                  }`}
               >
                 {slide.is_active ? "● Active on Hero" : "○ Hidden"}
               </button>
