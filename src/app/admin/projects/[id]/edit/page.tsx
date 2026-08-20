@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Upload, ArrowLeft, Save, Trash2 } from "lucide-react";
+import { Upload, ArrowLeft, Save, FileCode2, ImageIcon, X } from "lucide-react";
 import Link from "next/link";
 
 interface PageProps {
@@ -17,9 +17,16 @@ export default function EditProjectPage({ params }: PageProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // File Upload State
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  // File Upload States
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>("");
+
+  const [archFile, setArchFile] = useState<File | null>(null);
+  const [archPreview, setArchPreview] = useState<string>("");
+
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [existingGallery, setExistingGallery] = useState<string[]>([]);
+  const [newGalleryPreviews, setNewGalleryPreviews] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -37,7 +44,7 @@ export default function EditProjectPage({ params }: PageProps) {
     is_published: true,
   });
 
-  // Fetch existing project data
+  // Fetch existing project details
   useEffect(() => {
     const fetchProject = async () => {
       const supabase = createClient();
@@ -66,7 +73,12 @@ export default function EditProjectPage({ params }: PageProps) {
           is_featured: data.is_featured || false,
           is_published: data.is_published ?? true,
         });
-        if (data.image_url) setImagePreview(data.image_url);
+
+        if (data.image_url) setCoverPreview(data.image_url);
+        if (data.architecture_url) setArchPreview(data.architecture_url);
+        if (data.gallery_images && Array.isArray(data.gallery_images)) {
+          setExistingGallery(data.gallery_images);
+        }
         setLoading(false);
       }
     };
@@ -74,24 +86,56 @@ export default function EditProjectPage({ params }: PageProps) {
     fetchProject();
   }, [id]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setImageFile(file);
+    setCoverFile(file);
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setImagePreview(event.target?.result as string);
-    };
+    reader.onload = (event) => setCoverPreview(event.target?.result as string);
     reader.readAsDataURL(file);
   };
 
-  const uploadCoverToSupabase = async (file: File): Promise<string | null> => {
+  const handleArchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setArchFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => setArchPreview(event.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setGalleryFiles((prev) => [...prev, ...files]);
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setNewGalleryPreviews((prev) => [...prev, event.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingGallery((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewImage = (index: number) => {
+    setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
     try {
       const supabase = createClient();
       const fileExt = file.name.split('.').pop();
-      const fileName = `cover_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-      const filePath = `covers/${fileName}`;
+      const fileName = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `${folder}/${fileName}`;
 
       const { error } = await supabase.storage
         .from('project-covers')
@@ -119,13 +163,26 @@ export default function EditProjectPage({ params }: PageProps) {
     setError(null);
 
     const supabase = createClient();
-    let finalImageUrl = formData.image_url;
 
-    if (imageFile) {
-      const uploadedUrl = await uploadCoverToSupabase(imageFile);
-      if (uploadedUrl) finalImageUrl = uploadedUrl;
-    } else if (imagePreview && imagePreview !== formData.image_url && imagePreview.length < 100000) {
-      finalImageUrl = imagePreview;
+    // 1. Cover Image Upload
+    let finalCoverUrl = formData.image_url;
+    if (coverFile) {
+      const uploadedUrl = await uploadToStorage(coverFile, "covers");
+      if (uploadedUrl) finalCoverUrl = uploadedUrl;
+    }
+
+    // 2. Architecture Diagram Upload
+    let finalArchUrl = formData.architecture_url.trim();
+    if (archFile) {
+      const uploadedUrl = await uploadToStorage(archFile, "diagrams");
+      if (uploadedUrl) finalArchUrl = uploadedUrl;
+    }
+
+    // 3. Gallery Images Upload
+    const uploadedGalleryUrls: string[] = [...existingGallery];
+    for (const file of galleryFiles) {
+      const url = await uploadToStorage(file, "gallery");
+      if (url) uploadedGalleryUrls.push(url);
     }
 
     const { error: updateError } = await supabase
@@ -140,8 +197,9 @@ export default function EditProjectPage({ params }: PageProps) {
         status: formData.status,
         progress: formData.progress,
         github_url: formData.github_url || null,
-        architecture_url: formData.architecture_url || null,
-        image_url: finalImageUrl,
+        architecture_url: finalArchUrl || null,
+        image_url: finalCoverUrl,
+        gallery_images: uploadedGalleryUrls,
         is_featured: formData.is_featured,
         is_published: formData.is_published,
         updated_at: new Date().toISOString(),
@@ -171,7 +229,7 @@ export default function EditProjectPage({ params }: PageProps) {
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Projects List
         </Link>
         <h1 className="text-3xl font-bold text-[#111111] font-heading">Edit Project</h1>
-        <p className="text-[#666666] text-sm mt-1">Update build logs, schematics, and project cover images.</p>
+        <p className="text-[#666666] text-sm mt-1">Update build logs, schematics, and project photo gallery.</p>
       </div>
 
       {error && (
@@ -233,7 +291,7 @@ export default function EditProjectPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* COVER IMAGE UPLOAD SECTION */}
+        {/* 1. COVER IMAGE FILE UPLOAD */}
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
           <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
             <Upload className="h-4 w-4 text-steel-blue" /> Upload New Cover Image
@@ -241,15 +299,95 @@ export default function EditProjectPage({ params }: PageProps) {
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileChange}
+            onChange={handleCoverChange}
             className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white"
           />
 
-          {imagePreview && (
+          {coverPreview && (
             <div className="space-y-1 pt-1">
               <span className="block text-[11px] font-bold text-cool-slate">Current / New Cover Preview:</span>
               <div className="w-full aspect-video max-h-48 rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                <img src={imagePreview} alt="Cover Preview" className="w-full h-full object-cover" />
+                <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 2. ARCHITECTURE DIAGRAM UPLOAD */}
+        <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
+            <FileCode2 className="h-4 w-4 text-steel-blue" /> Upload Architecture / Circuit Schematic Diagram
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleArchChange}
+            className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white"
+          />
+
+          {archPreview && (
+            <div className="space-y-1 pt-1">
+              <span className="block text-[11px] font-bold text-cool-slate">Architecture Diagram Preview:</span>
+              <div className="w-full max-h-48 rounded-xl overflow-hidden border border-slate-200 bg-slate-900 flex items-center justify-center">
+                <img src={archPreview} alt="Diagram Preview" className="max-h-48 object-contain" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 3. MULTIPLE GALLERY IMAGES UPLOAD */}
+        <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
+            <ImageIcon className="h-4 w-4 text-steel-blue" /> Upload Additional Project Photos / Build Gallery
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleGalleryChange}
+            className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white"
+          />
+
+          {/* Existing Gallery Images */}
+          {existingGallery.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <span className="block text-[11px] font-bold text-cool-slate">Existing Gallery Images ({existingGallery.length}):</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {existingGallery.map((src, index) => (
+                  <div key={index} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group">
+                    <img src={src} alt={`Existing Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingImage(index)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-red-600 text-white rounded-full opacity-80 hover:opacity-100 transition-opacity"
+                      title="Remove Image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New Gallery Previews */}
+          {newGalleryPreviews.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <span className="block text-[11px] font-bold text-cool-slate">Newly Uploaded Images ({newGalleryPreviews.length}):</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {newGalleryPreviews.map((src, index) => (
+                  <div key={index} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group">
+                    <img src={src} alt={`New Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeNewImage(index)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-red-600 text-white rounded-full opacity-80 hover:opacity-100 transition-opacity"
+                      title="Remove Image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -266,25 +404,14 @@ export default function EditProjectPage({ params }: PageProps) {
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-xs font-bold text-[#0f172a] mb-1">GitHub Repo URL</label>
-            <input
-              type="url"
-              value={formData.github_url}
-              onChange={(e) => setFormData({ ...formData, github_url: e.target.value })}
-              className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-[#0f172a] mb-1">Architecture Diagram URL</label>
-            <input
-              type="url"
-              value={formData.architecture_url}
-              onChange={(e) => setFormData({ ...formData, architecture_url: e.target.value })}
-              className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
-            />
-          </div>
+        <div>
+          <label className="block text-xs font-bold text-[#0f172a] mb-1">GitHub Repo URL</label>
+          <input
+            type="url"
+            value={formData.github_url}
+            onChange={(e) => setFormData({ ...formData, github_url: e.target.value })}
+            className="w-full text-xs px-4 py-2.5 rounded-xl border border-[#cccccc] focus:border-blue-600 focus:outline-none transition-colors"
+          />
         </div>
 
         <div>

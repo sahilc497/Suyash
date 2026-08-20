@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Cpu, Layers, FileCode2, ExternalLink, Sparkles, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, FileCode2, ExternalLink, Sparkles, Clock, Images, Cpu, Layers } from "lucide-react";
 
 const GithubIcon = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.24c3-.34 6-1.53 6-6.76a5.2 5.2 0 0 0-1.5-3.78 4.7 4.7 0 0 0-.15-3.72s-1.2-.38-3.9 1.4a13.38 13.38 0 0 0-7 0c-2.7-1.8-3.9-1.4-3.9-1.4a4.7 4.7 0 0 0-.15 3.72 5.2 5.2 0 0 0-1.5 3.78c0 5.23 3 6.42 6 6.76a4.8 4.8 0 0 0-1 3.24v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps) {
 
   return {
     title: project ? `${project.title} | Ideas by Suyash` : "Project Details",
-    description: project?.short_description || "Hardware build log and circuit schematics.",
+    description: project?.short_description || "Hardware build log, circuit schematics and photo gallery.",
   };
 }
 
@@ -36,6 +36,10 @@ export default async function ProjectPage({ params }: PageProps) {
     notFound();
   }
 
+  const galleryImages: string[] = project.gallery_images && Array.isArray(project.gallery_images) 
+    ? project.gallery_images 
+    : [];
+
   return (
     <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans min-h-screen py-8 sm:py-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12 space-y-8">
@@ -45,7 +49,7 @@ export default async function ProjectPage({ params }: PageProps) {
           <ArrowLeft className="h-4 w-4" /> Back to All Projects
         </Link>
 
-        {/* Project Header Header Card */}
+        {/* Project Header Card */}
         <header className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xs space-y-6">
           
           {/* Metadata Badges */}
@@ -74,7 +78,7 @@ export default async function ProjectPage({ params }: PageProps) {
             </p>
           </div>
 
-          {/* Action Links (GitHub & Architecture Diagram) */}
+          {/* Action Links */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
             {project.github_url && (
               <a 
@@ -113,7 +117,7 @@ export default async function ProjectPage({ params }: PageProps) {
           </div>
         </header>
 
-        {/* Cover Image Feature Banner */}
+        {/* 1. Cover Image Feature Banner */}
         <div className="w-full aspect-video max-h-120 rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900 relative">
           <img 
             src={project.image_url || "/circuit-schematic.jpg"} 
@@ -122,7 +126,53 @@ export default async function ProjectPage({ params }: PageProps) {
           />
         </div>
 
-        {/* Project Content / Build Log & Schematics */}
+        {/* 2. Architecture / Circuit Diagram Section */}
+        {project.architecture_url && (
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+            <h2 className="text-xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
+              <FileCode2 className="h-5 w-5 text-steel-blue" /> Architecture & Circuit Schematics
+            </h2>
+            <div className="w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 flex items-center justify-center p-4">
+              <img 
+                src={project.architecture_url} 
+                alt="Architecture Diagram" 
+                className="max-h-110 object-contain w-auto rounded-xl"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 3. Multiple Project Photo Gallery */}
+        {galleryImages.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xs space-y-4">
+            <h2 className="text-xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
+              <Images className="h-5 w-5 text-steel-blue" /> Project Photo Gallery ({galleryImages.length})
+            </h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+              {galleryImages.map((imageUrl, idx) => (
+                <a 
+                  key={idx} 
+                  href={imageUrl} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="group relative aspect-video rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 block shadow-2xs hover:shadow-md transition-all"
+                >
+                  <img 
+                    src={imageUrl} 
+                    alt={`${project.title} photo ${idx + 1}`} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-xs">
+                    <ExternalLink className="h-4 w-4" /> View Full Resolution
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Build Log & Specifications */}
         <article className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-6">
           <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2 pb-4 border-b border-slate-100">
             <Sparkles className="h-5 w-5 text-steel-blue" /> Build Log & Engineering Details
