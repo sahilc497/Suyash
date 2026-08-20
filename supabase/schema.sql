@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
   progress INTEGER DEFAULT 0,
   github_url TEXT,
   architecture_url TEXT,
+  image_url TEXT, -- Project Cover Image
   is_featured BOOLEAN DEFAULT false,
   is_published BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -61,11 +62,11 @@ CREATE TABLE IF NOT EXISTS public.build_logs (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. SOCIAL POSTS TABLE (YouTube & Instagram Sync)
+-- 5. SOCIAL POSTS TABLE (YouTube & Video Sync)
 CREATE TABLE IF NOT EXISTS public.social_posts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   platform TEXT NOT NULL CHECK (platform IN ('youtube', 'instagram')),
-  external_id TEXT UNIQUE,
+  external_id TEXT,
   title TEXT,
   description TEXT,
   category TEXT DEFAULT 'Tutorial',
