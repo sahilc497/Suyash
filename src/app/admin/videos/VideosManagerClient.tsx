@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Plus, Edit2, Trash2, Video, Image as ImageIcon, Save, Check, X, ExternalLink, Play, Sparkles } from "lucide-react";
 
 export interface VideoItem {
@@ -40,6 +41,7 @@ export default function VideosManagerClient({ initialVideos }: { initialVideos: 
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states
   const [newUrl, setNewUrl] = useState("");
@@ -48,29 +50,26 @@ export default function VideosManagerClient({ initialVideos }: { initialVideos: 
   const [editUrl, setEditUrl] = useState("");
   const [editThumbnail, setEditThumbnail] = useState("");
 
-  // Load saved videos from localStorage if available
+  // Sync videos from Supabase DB on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("buildpulse_videos_archive");
-      if (stored) {
-        setVideos(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
+    const syncVideosFromSupabase = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("social_posts")
+          .select("*")
+          .order("published_at", { ascending: false });
 
-  const saveVideosToStore = (newVideos: VideoItem[]) => {
-    setVideos(newVideos);
-    try {
-      localStorage.setItem("buildpulse_videos_archive", JSON.stringify(newVideos));
-      window.dispatchEvent(new Event("videos_updated"));
-    } catch (e) {
-      console.error(e);
-    }
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2500);
-  };
+        if (data && data.length > 0) {
+          setVideos(data as VideoItem[]);
+        }
+      } catch (e) {
+        console.error("Failed to sync videos from Supabase:", e);
+      }
+    };
+
+    syncVideosFromSupabase();
+  }, []);
 
   // Auto populate thumbnail when video URL changes
   const handleNewUrlChange = (url: string) => {
@@ -85,58 +84,141 @@ export default function VideosManagerClient({ initialVideos }: { initialVideos: 
     setEditThumbnail(defaultThumbnail);
   };
 
-  const handleCreateVideo = (e: React.FormEvent<HTMLFormElement>) => {
+  // Create Video in Supabase DB
+  const handleCreateVideo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     
     const url = formData.get("content_url") as string || "";
     const { defaultThumbnail } = extractYouTubeInfo(url);
     const thumbnail = newThumbnail || (formData.get("thumbnail_url") as string) || defaultThumbnail;
+    const title = formData.get("title") as string || "New Engineering Video";
+    const description = formData.get("description") as string || "";
+    const category = formData.get("category") as string || "Tutorial";
 
-    const newVideo: VideoItem = {
-      id: Date.now().toString(),
-      title: formData.get("title") as string || "New Engineering Video",
-      description: formData.get("description") as string || "",
-      content_url: url,
-      thumbnail_url: thumbnail,
-      category: formData.get("category") as string || "Tutorial",
-      platform: "youtube",
-      published_at: new Date().toISOString(),
-    };
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("social_posts")
+      .insert({
+        title,
+        description,
+        content_url: url,
+        thumbnail_url: thumbnail,
+        category,
+        platform: "youtube",
+        content_type: "video",
+        published_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-    const updated = [newVideo, ...videos];
-    saveVideosToStore(updated);
+    if (error) {
+      console.error("Error creating video in Supabase:", error);
+      // Fallback local addition if DB fails
+      const fallbackVideo: VideoItem = {
+        id: Date.now().toString(),
+        title,
+        description,
+        content_url: url,
+        thumbnail_url: thumbnail,
+        category,
+        platform: "youtube",
+        published_at: new Date().toISOString(),
+      };
+      setVideos([fallbackVideo, ...videos]);
+    } else if (data) {
+      setVideos([data as VideoItem, ...videos]);
+    }
+
+    // Save backup to localStorage
+    try {
+      localStorage.setItem("buildpulse_videos_archive", JSON.stringify(videos));
+      window.dispatchEvent(new Event("videos_updated"));
+    } catch (err) {
+      console.error(err);
+    }
+
+    setIsSubmitting(false);
     setIsNewModalOpen(false);
     setNewUrl("");
     setNewThumbnail("");
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleUpdateVideo = (e: React.FormEvent<HTMLFormElement>) => {
+  // Update Video in Supabase DB
+  const handleUpdateVideo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingVideo) return;
+    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     const url = formData.get("content_url") as string || editingVideo.content_url;
     const thumbnail = editThumbnail || (formData.get("thumbnail_url") as string) || editingVideo.thumbnail_url;
+    const title = formData.get("title") as string || editingVideo.title;
+    const description = formData.get("description") as string || editingVideo.description;
+    const category = formData.get("category") as string || editingVideo.category || "Tutorial";
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("social_posts")
+      .update({
+        title,
+        description,
+        content_url: url,
+        thumbnail_url: thumbnail,
+        category,
+      })
+      .eq("id", editingVideo.id);
+
+    if (error) {
+      console.error("Error updating video in Supabase:", error);
+    }
 
     const updatedVideo: VideoItem = {
       ...editingVideo,
-      title: formData.get("title") as string || editingVideo.title,
-      description: formData.get("description") as string || editingVideo.description,
+      title,
+      description,
       content_url: url,
       thumbnail_url: thumbnail,
-      category: formData.get("category") as string || editingVideo.category || "Tutorial",
+      category,
     };
 
-    const updated = videos.map((v) => (v.id === editingVideo.id ? updatedVideo : v));
-    saveVideosToStore(updated);
+    const updatedList = videos.map((v) => (v.id === editingVideo.id ? updatedVideo : v));
+    setVideos(updatedList);
+
+    try {
+      localStorage.setItem("buildpulse_videos_archive", JSON.stringify(updatedList));
+      window.dispatchEvent(new Event("videos_updated"));
+    } catch (err) {
+      console.error(err);
+    }
+
+    setIsSubmitting(false);
     setEditingVideo(null);
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleDeleteVideo = (id: string) => {
+  // Delete Video from Supabase DB
+  const handleDeleteVideo = async (id: string) => {
     if (confirm("Are you sure you want to remove this video from your channel archive?")) {
-      const updated = videos.filter((v) => v.id !== id);
-      saveVideosToStore(updated);
+      const supabase = createClient();
+      await supabase.from("social_posts").delete().eq("id", id);
+
+      const updatedList = videos.filter((v) => v.id !== id);
+      setVideos(updatedList);
+
+      try {
+        localStorage.setItem("buildpulse_videos_archive", JSON.stringify(updatedList));
+        window.dispatchEvent(new Event("videos_updated"));
+      } catch (err) {
+        console.error(err);
+      }
+
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
     }
   };
 
@@ -180,50 +262,46 @@ export default function VideosManagerClient({ initialVideos }: { initialVideos: 
                 <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold">
                   {video.category || "YouTube"}
                 </span>
-                <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-12 h-12 rounded-full bg-white text-steel-blue flex items-center justify-center shadow-lg">
-                    <Play className="h-6 w-6 fill-current ml-0.5" />
-                  </div>
-                </div>
               </div>
               
               <div className="p-5 space-y-2">
-                <h3 className="text-base font-bold text-[#0f172a] leading-snug line-clamp-2">
+                <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
                   {video.title}
                 </h3>
                 <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
-                  {video.description}
+                  {video.description || "Video build log demonstration."}
                 </p>
               </div>
             </div>
 
-            <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 mt-2">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
               <a 
                 href={video.content_url} 
                 target="_blank" 
+                rel="noopener noreferrer"
                 className="text-xs font-semibold text-steel-blue hover:underline flex items-center gap-1"
               >
-                Watch Video <ExternalLink className="h-3.5 w-3.5" />
+                Open Link <ExternalLink className="h-3 w-3" />
               </a>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => {
                     setEditingVideo(video);
                     setEditUrl(video.content_url);
                     setEditThumbnail(video.thumbnail_url);
                   }}
-                  className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
                   title="Edit Video"
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
+                  <Edit2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteVideo(video.id)}
-                  className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                  className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                   title="Delete Video"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -231,109 +309,110 @@ export default function VideosManagerClient({ initialVideos }: { initialVideos: 
         ))}
       </div>
 
-      {/* CREATE NEW VIDEO MODAL */}
+      {/* NEW VIDEO MODAL */}
       {isNewModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-slate-200 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-[#0f172a]">Add New Video</h3>
-              <button onClick={() => setIsNewModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-[#0f172a] flex items-center gap-2">
+                <Video className="h-5 w-5 text-steel-blue" /> Add YouTube Video
+              </h3>
+              <button 
+                onClick={() => setIsNewModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateVideo} className="space-y-4 text-xs font-medium text-[#0f172a]">
+            <form onSubmit={handleCreateVideo} className="space-y-4">
               <div>
-                <label className="block font-bold mb-1">YouTube / Video URL or Embedded Link *</label>
-                <input 
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  YouTube Link or Embedded URL *
+                </label>
+                <input
                   type="url"
                   name="content_url"
-                  required
                   value={newUrl}
                   onChange={(e) => handleNewUrlChange(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
+                  required
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-steel-blue"
                 />
                 <p className="text-[10px] text-cool-slate mt-1">
-                  Tip: Paste any YouTube link and the high-res thumbnail will auto-generate below!
+                  Supports YouTube watch links, shorts (`shorts/`), `youtu.be/`, and embed links. High-res thumbnail auto-generates!
                 </p>
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Video Title *</label>
-                <input 
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Video Title *
+                </label>
+                <input
                   type="text"
                   name="title"
                   required
-                  placeholder="e.g. ESP32 Handheld Game Console Build Log"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
+                  placeholder="e.g. ESP32 Handheld Gaming Console Build Log"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-steel-blue"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Short Description / Key Topics *</label>
-                <textarea 
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Category / Topic Tag
+                </label>
+                <select
+                  name="category"
+                  defaultValue="Tutorial"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-steel-blue"
+                >
+                  <option value="Tutorial">Tutorial</option>
+                  <option value="Robotics & Automation">Robotics & Automation</option>
+                  <option value="Arduino & ESP32">Arduino & ESP32</option>
+                  <option value="Embedded Systems">Embedded Systems</option>
+                  <option value="IoT & Wireless">IoT & Wireless</option>
+                  <option value="ECE & Circuits">ECE & Circuits</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Description
+                </label>
+                <textarea
                   name="description"
-                  required
                   rows={3}
-                  placeholder="Brief summary of hardware features, sensors, and code..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
+                  placeholder="Brief summary of the build video demonstration..."
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-steel-blue"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold mb-1">Category Tag</label>
-                  <select
-                    name="category"
-                    defaultValue="Embedded Systems"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
-                  >
-                    <option value="Arduino & ESP32">Arduino & ESP32</option>
-                    <option value="IoT">IoT</option>
-                    <option value="Embedded Systems">Embedded Systems</option>
-                    <option value="ECE">ECE</option>
-                    <option value="Robotics & Automation">Robotics & Automation</option>
-                    <option value="Tutorial">Tutorial</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold mb-1">Thumbnail URL</label>
-                  <input 
-                    type="text"
-                    name="thumbnail_url"
-                    value={newThumbnail}
-                    onChange={(e) => setNewThumbnail(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
-                  />
-                </div>
-              </div>
-
-              {/* Thumbnail Preview */}
+              {/* Preview Thumbnail */}
               {newThumbnail && (
                 <div className="space-y-1">
-                  <span className="block text-[11px] font-bold text-cool-slate">Thumbnail Preview:</span>
+                  <label className="block text-[11px] font-bold text-cool-slate">
+                    Auto-Generated YouTube Thumbnail Preview:
+                  </label>
                   <div className="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                    <img src={newThumbnail} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={newThumbnail} alt="Thumbnail Preview" className="w-full h-full object-cover" />
                   </div>
                 </div>
               )}
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsNewModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-steel-blue text-white font-bold hover:bg-blue-700 transition-all shadow-xs"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-xl bg-steel-blue hover:bg-blue-700 text-white text-xs font-bold transition-all disabled:opacity-50"
                 >
-                  Save Video
+                  {isSubmitting ? "Publishing..." : "Publish Video Link"}
                 </button>
               </div>
             </form>
@@ -343,102 +422,92 @@ export default function VideosManagerClient({ initialVideos }: { initialVideos: 
 
       {/* EDIT VIDEO MODAL */}
       {editingVideo && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-slate-200 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-[#0f172a]">Edit Video</h3>
-              <button onClick={() => setEditingVideo(null)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-[#0f172a] flex items-center gap-2">
+                <Edit2 className="h-5 w-5 text-steel-blue" /> Edit Video Archive
+              </h3>
+              <button 
+                onClick={() => setEditingVideo(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdateVideo} className="space-y-4 text-xs font-medium text-[#0f172a]">
+            <form onSubmit={handleUpdateVideo} className="space-y-4">
               <div>
-                <label className="block font-bold mb-1">YouTube / Video URL *</label>
-                <input 
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  YouTube Link or Embedded URL
+                </label>
+                <input
                   type="url"
                   name="content_url"
-                  required
                   value={editUrl}
                   onChange={(e) => handleEditUrlChange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
+                  required
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-steel-blue"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Video Title *</label>
-                <input 
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Video Title
+                </label>
+                <input
                   type="text"
                   name="title"
-                  required
                   defaultValue={editingVideo.title}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
+                  required
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-steel-blue"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Description / Key Topics *</label>
-                <textarea 
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Category / Topic Tag
+                </label>
+                <select
+                  name="category"
+                  defaultValue={editingVideo.category || "Tutorial"}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-steel-blue"
+                >
+                  <option value="Tutorial">Tutorial</option>
+                  <option value="Robotics & Automation">Robotics & Automation</option>
+                  <option value="Arduino & ESP32">Arduino & ESP32</option>
+                  <option value="Embedded Systems">Embedded Systems</option>
+                  <option value="IoT & Wireless">IoT & Wireless</option>
+                  <option value="ECE & Circuits">ECE & Circuits</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0f172a] mb-1">
+                  Description
+                </label>
+                <textarea
                   name="description"
-                  required
                   rows={3}
                   defaultValue={editingVideo.description}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-steel-blue"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold mb-1">Category Tag</label>
-                  <select
-                    name="category"
-                    defaultValue={editingVideo.category || "Tutorial"}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
-                  >
-                    <option value="Arduino & ESP32">Arduino & ESP32</option>
-                    <option value="IoT">IoT</option>
-                    <option value="Embedded Systems">Embedded Systems</option>
-                    <option value="ECE">ECE</option>
-                    <option value="Robotics & Automation">Robotics & Automation</option>
-                    <option value="Tutorial">Tutorial</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold mb-1">Thumbnail URL</label>
-                  <input 
-                    type="text"
-                    name="thumbnail_url"
-                    value={editThumbnail}
-                    onChange={(e) => setEditThumbnail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-steel-blue"
-                  />
-                </div>
-              </div>
-
-              {/* Thumbnail Preview */}
-              {editThumbnail && (
-                <div className="space-y-1">
-                  <span className="block text-[11px] font-bold text-cool-slate">Thumbnail Preview:</span>
-                  <div className="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
-                    <img src={editThumbnail} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingVideo(null)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-steel-blue text-white font-bold hover:bg-blue-700 transition-all shadow-xs"
+                  disabled={isSubmitting}
+                  className="px-5 py-2 rounded-xl bg-steel-blue hover:bg-blue-700 text-white text-xs font-bold transition-all disabled:opacity-50"
                 >
-                  Update Video
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
