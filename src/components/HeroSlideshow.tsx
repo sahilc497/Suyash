@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft, ChevronRight, Sparkles, Play, ExternalLink } from "lucide-react";
 
 interface Slide {
@@ -13,16 +14,74 @@ interface Slide {
   is_active?: boolean;
 }
 
-const defaultSlides: Slide[] = [];
+const defaultSeedSlides: Slide[] = [
+  {
+    id: 1,
+    title: "ESP32 Handheld Game Console",
+    category: "EMBEDDED HARDWARE",
+    description: "Custom perfboard gaming handheld powered by ESP32 with SPI display & physical controls.",
+    image: "/slideshow/slide1.png",
+    video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
+  },
+  {
+    id: 2,
+    title: "Ideas by Suyash Studio & YouTube",
+    category: "LAB SETUP & YOUTUBE",
+    description: "Over 110+ engineering videos documenting robotics, IoT, and custom circuits.",
+    image: "/slideshow/slide2.png",
+    video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
+  },
+  {
+    id: 3,
+    title: "Autonomous 4WD Mobile Rover",
+    category: "AUTONOMOUS ROBOTICS",
+    description: "4-wheel drive robotic platform equipped with smartphone gimbal vision & motor driver shield.",
+    image: "/slideshow/slide3.jpg",
+    video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
+  },
+  {
+    id: 4,
+    title: "Long Range RF Transceiver Module",
+    category: "RADIO TELEMETRY",
+    description: "Custom wireless telemetry transmitter board designed for real-time sensor data link.",
+    image: "/slideshow/slide4.png",
+    video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
+  },
+];
 
 export default function HeroSlideshow() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Sync slides dynamically from admin updates stored in localStorage or events
+  // Fetch active slides directly from Supabase DB
   useEffect(() => {
-    const loadDynamicSlides = () => {
+    const fetchSlides = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("slideshow_slides")
+          .select("*")
+          .eq("is_active", true)
+          .order("display_order", { ascending: true });
+
+        if (data && data.length > 0) {
+          const mapped = data.map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            category: s.category || "BUILD SHOWCASE",
+            description: s.description,
+            image: s.image_url || s.image || "/circuit-board-header.jpg",
+            video_url: s.video_url,
+          }));
+          setSlides(mapped);
+          return;
+        }
+      } catch (err) {
+        console.error("Error fetching slides from Supabase:", err);
+      }
+
+      // Fallback to localStorage or default seed slides
       try {
         const stored = localStorage.getItem("buildpulse_slideshow_slides");
         if (stored) {
@@ -35,16 +94,22 @@ export default function HeroSlideshow() {
             image: s.image_url || s.image || "/circuit-board-header.jpg",
             video_url: s.video_url,
           }));
-          setSlides(activeSlides);
+          if (activeSlides.length > 0) {
+            setSlides(activeSlides);
+            return;
+          }
         }
       } catch (e) {
         console.error("Error reading stored slideshow slides:", e);
       }
+
+      // Final fallback to seed slides
+      setSlides(defaultSeedSlides);
     };
 
-    loadDynamicSlides();
-    window.addEventListener("slideshow_updated", loadDynamicSlides);
-    return () => window.removeEventListener("slideshow_updated", loadDynamicSlides);
+    fetchSlides();
+    window.addEventListener("slideshow_updated", fetchSlides);
+    return () => window.removeEventListener("slideshow_updated", fetchSlides);
   }, []);
 
   useEffect(() => {
