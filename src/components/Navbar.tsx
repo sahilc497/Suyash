@@ -115,13 +115,18 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Hamburger Button */}
+          {/* Mobile Hamburger Button (3-lines menu icon) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
+            className="lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0f172a] text-white hover:bg-navy-slate font-bold text-xs shadow-xs transition-all border border-slate-800 shrink-0"
             aria-label="Toggle Navigation Menu"
           >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5 stroke-[2.5]" />
+            ) : (
+              <Menu className="h-5 w-5 stroke-[2.5]" />
+            )}
+            <span className="text-[11px] uppercase tracking-wider font-mono font-bold">Menu</span>
           </button>
         </div>
 
