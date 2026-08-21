@@ -140,14 +140,15 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
                 <div className="flex items-center justify-between text-[11px] text-cool-slate pt-3 border-t border-slate-100 font-medium">
                   <span>Status: <strong className="text-[#0f172a]">{project.status || 'Completed'}</strong></span>
-                  <Link href={`/projects/${project.slug}`} className="text-steel-blue font-bold hover:underline flex items-center gap-1">
+                  <Link href={projectUrl} className="text-steel-blue font-bold hover:underline flex items-center gap-1">
                     Read Log <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
       )}
 
     </div>
