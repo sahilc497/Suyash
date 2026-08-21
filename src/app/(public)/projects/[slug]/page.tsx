@@ -18,7 +18,11 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: project } = await supabase.from("projects").select("title, short_description").eq("slug", slug).single();
+  let { data: project } = await supabase.from("projects").select("title, short_description").eq("slug", slug).maybeSingle();
+  if (!project) {
+    const { data: projById } = await supabase.from("projects").select("title, short_description").eq("id", slug).maybeSingle();
+    project = projById;
+  }
 
   return {
     title: project ? `${project.title} | Ideas by Suyash` : "Project Details",
@@ -27,14 +31,21 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ProjectPage({ params }: PageProps) {
-  const { slug } = await params;
-  const supabase = await createClient();
-
-  const { data: project } = await supabase
+  // Query by slug first, then fallback to id
+  let { data: project } = await supabase
     .from("projects")
     .select("*")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
+
+  if (!project) {
+    const { data: projectById } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", slug)
+      .maybeSingle();
+    project = projectById;
+  }
 
   if (!project) {
     notFound();
