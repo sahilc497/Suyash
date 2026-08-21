@@ -321,7 +321,7 @@ export default function EditProjectPage({ params }: PageProps) {
       .from("projects")
       .update({
         title: formData.title,
-        slug: formData.slug,
+        slug: formData.slug.toLowerCase().replace(/https?:\/\/[^\s]+/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
         short_description: formData.short_description,
         category: formData.category,
         content: formData.content,

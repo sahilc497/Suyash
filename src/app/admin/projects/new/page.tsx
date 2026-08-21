@@ -63,7 +63,11 @@ export default function NewProjectPage() {
   });
 
   const generateSlug = (title: string) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    return title
+      .toLowerCase()
+      .replace(/https?:\/\/[^\s]+/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

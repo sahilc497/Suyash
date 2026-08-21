@@ -98,31 +98,36 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <div 
-              key={project.id} 
-              className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div>
-                <Link href={`/projects/${project.slug}`} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
-                  <img 
-                    src={project.image_url || "/circuit-schematic.jpg"} 
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                  <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide shadow-xs">
-                    {project.category || "Arduino & ESP32"}
-                  </span>
-                </Link>
-                <div className="p-5 space-y-2">
-                  <h3 className="text-lg font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
-                    <Link href={`/projects/${project.slug}`}>{project.title}</Link>
-                  </h3>
-                  <p className="text-xs text-cool-slate leading-relaxed line-clamp-3">
-                    {project.short_description}
-                  </p>
+          {filteredProjects.map((project) => {
+            const projectUrl = (project.slug && !project.slug.startsWith("http") && !project.slug.includes("/"))
+              ? `/projects/${project.slug}`
+              : `/projects/${project.id}`;
+
+            return (
+              <div 
+                key={project.id} 
+                className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <Link href={projectUrl} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
+                    <img 
+                      src={project.image_url || "/circuit-schematic.jpg"} 
+                      alt={project.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                    <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide shadow-xs">
+                      {project.category || "Arduino & ESP32"}
+                    </span>
+                  </Link>
+                  <div className="p-5 space-y-2">
+                    <h3 className="text-lg font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
+                      <Link href={projectUrl}>{project.title}</Link>
+                    </h3>
+                    <p className="text-xs text-cool-slate leading-relaxed line-clamp-3">
+                      {project.short_description}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
               <div className="p-5 pt-0 space-y-3">
                 <div className="flex flex-wrap gap-1.5">

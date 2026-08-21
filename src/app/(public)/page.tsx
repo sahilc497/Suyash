@@ -138,28 +138,33 @@ export default async function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-            {projects.map((project, idx) => (
-              <div key={project.id || idx} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-                <div>
-                  <Link href={`/projects/${project.slug}`} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
-                    <img 
-                      src={project.image_url || "/circuit-schematic.jpg"} 
-                      alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                    <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
-                      {project.category || "IoT"}
-                    </span>
-                  </Link>
-                  <div className="p-4 space-y-2">
-                    <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
-                      <Link href={`/projects/${project.slug}`}>{project.title}</Link>
-                    </h3>
-                    <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
-                      {project.short_description}
-                    </p>
+            {projects.map((project, idx) => {
+              const projectUrl = (project.slug && !project.slug.startsWith("http") && !project.slug.includes("/"))
+                ? `/projects/${project.slug}`
+                : `/projects/${project.id}`;
+
+              return (
+                <div key={project.id || idx} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+                  <div>
+                    <Link href={projectUrl} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
+                      <img 
+                        src={project.image_url || "/circuit-schematic.jpg"} 
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                      <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
+                        {project.category || "IoT"}
+                      </span>
+                    </Link>
+                    <div className="p-4 space-y-2">
+                      <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
+                        <Link href={projectUrl}>{project.title}</Link>
+                      </h3>
+                      <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
+                        {project.short_description}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
                 <div className="p-4 pt-0 flex flex-wrap gap-1.5">
                   {(project.tags || ["ESP32", "MQTT"]).map((tag: string) => (
