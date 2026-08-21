@@ -20,12 +20,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.ideasbysuyash.in"),
   title: "Ideas by Suyash | Engineering Lab & Build Logs",
   description: "Building technology in the real world. Embedded Systems, Robotics, Edge AI.",
   icons: {
     icon: "/logo.png",
     shortcut: "/logo.png",
     apple: "/logo.png",
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "google_verification_code_placeholder",
   },
 };
 
