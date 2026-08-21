@@ -470,7 +470,7 @@ export default function EditProjectPage({ params }: PageProps) {
         {/* IMAGES */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-slate-50 rounded-2xl border border-slate-200">
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
+            <label className="text-xs font-bold text-[#0f172a] flex items-center gap-2">
               <Upload className="h-4 w-4 text-steel-blue" /> Replace Cover Image (Optional)
             </label>
             <input
@@ -495,7 +495,7 @@ export default function EditProjectPage({ params }: PageProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
+            <label className="text-xs font-bold text-[#0f172a] flex items-center gap-2">
               <FileCode2 className="h-4 w-4 text-steel-blue" /> Architecture Diagram (Optional)
             </label>
             <input
@@ -685,7 +685,7 @@ export default function EditProjectPage({ params }: PageProps) {
 
         {/* SECTION: GALLERY */}
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-          <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
+          <label className="text-xs font-bold text-[#0f172a] flex items-center gap-2">
             <ImageIcon className="h-4 w-4 text-steel-blue" /> Upload Additional Build Gallery Photos (Optional)
           </label>
           <input

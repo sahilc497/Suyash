@@ -198,7 +198,7 @@ export default function NewArticlePage() {
 
         {/* COVER IMAGE UPLOAD SECTION */}
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-          <label className="block text-xs font-bold text-[#0f172a] flex items-center gap-2">
+          <label className="text-xs font-bold text-[#0f172a] flex items-center gap-2">
             <Upload className="h-4 w-4 text-steel-blue" /> Upload Article Cover Image (Optional)
           </label>
           <input
