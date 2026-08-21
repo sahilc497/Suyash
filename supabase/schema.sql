@@ -30,7 +30,11 @@ CREATE TABLE IF NOT EXISTS public.projects (
   progress INTEGER DEFAULT 0,
   github_url TEXT,
   architecture_url TEXT,
-  image_url TEXT, -- Project Cover Image
+  video_url TEXT,
+  image_url TEXT, -- Project Cover Image (Optional)
+  gallery_images TEXT[], -- Project Photo Gallery Array (Optional)
+  components JSONB DEFAULT '[]'::jsonb, -- Required Components List with images (Optional)
+  tutorial_steps JSONB DEFAULT '[]'::jsonb, -- Step-by-Step Build Tutorial Steps (Optional)
   is_featured BOOLEAN DEFAULT false,
   is_published BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
