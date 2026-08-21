@@ -70,133 +70,136 @@ export default async function ProjectPage({ params }: PageProps) {
 
   return (
     <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans min-h-screen py-6 sm:py-10">
-      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 space-y-8">
+      <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 space-y-8">
         
         {/* Back Link */}
         <Link href="/projects" className="inline-flex items-center gap-2 text-xs font-bold text-cool-slate hover:text-steel-blue transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back to All Projects
         </Link>
 
-        {/* Full-Width Project Header Card */}
-        <header className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-6">
-          
-          {/* Metadata Badges */}
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            <span className="px-3.5 py-1 rounded-full bg-steel-blue text-white font-extrabold tracking-wide uppercase text-[11px] shadow-xs">
-              {project.category || "Arduino & ESP32"}
-            </span>
-            <span className="px-3.5 py-1 rounded-full bg-slate-100 text-[#475569] font-bold text-[11px] border border-slate-200">
-              {project.difficulty || "Intermediate"} Level
-            </span>
-            <span className="px-3.5 py-1 rounded-full bg-blue-50 text-steel-blue font-bold text-[11px] flex items-center gap-1 border border-blue-100">
-              <Clock className="h-3.5 w-3.5" /> {project.status || "In Progress"}
-            </span>
-            <span className="text-cool-slate font-medium text-xs flex items-center gap-1 ml-auto">
-              <Calendar className="h-3.5 w-3.5" /> Published {new Date(project.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-            </span>
-          </div>
-
-          {/* Title & Short Description */}
-          <div className="space-y-3">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#0f172a] leading-tight font-heading tracking-tight">
-              {project.title}
-            </h1>
-            <p className="text-base sm:text-lg text-cool-slate leading-relaxed max-w-5xl">
-              {project.short_description}
-            </p>
-          </div>
-
-          {/* Action Links */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            {project.github_url && (
-              <a 
-                href={project.github_url} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0f172a] hover:bg-navy-slate text-white text-xs font-bold transition-all shadow-2xs hover:scale-[1.01]"
-              >
-                <GithubIcon className="h-4 w-4" /> Source Code on GitHub
-              </a>
-            )}
-            {project.video_url && (
-              <a 
-                href={project.video_url} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-2xs"
-              >
-                <Video className="h-4 w-4" /> Watch YouTube Video <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-            {project.architecture_url && (
-              <a 
-                href={project.architecture_url} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0f172a] border border-slate-200 text-xs font-bold transition-all"
-              >
-                <FileCode2 className="h-4 w-4 text-steel-blue" /> Circuit Diagram <ExternalLink className="h-3 w-3 text-cool-slate" />
-              </a>
-            )}
-          </div>
-
-          {/* Build Progress Bar */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <div className="flex items-center justify-between text-xs font-bold text-[#0f172a]">
-              <span>Build Completion Progress</span>
-              <span className="font-mono text-steel-blue text-sm">{project.progress || 100}%</span>
+        {/* FULL-PAGE HERO HEADER: LEFT IMAGE + RIGHT DETAILS (TEXT ALL OVER) */}
+        <header className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            
+            {/* LEFT COLUMN: PROJECT COVER IMAGE / BANNER */}
+            <div className="lg:col-span-5 w-full">
+              <div className="w-full aspect-video lg:aspect-4/3 max-h-[480px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900 relative">
+                <img 
+                  src={project.image_url || "/circuit-schematic.jpg"} 
+                  alt={project.title} 
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute top-4 left-4 px-3.5 py-1 rounded-full bg-steel-blue text-white font-extrabold tracking-wide uppercase text-[11px] shadow-sm">
+                  {project.category || "Arduino & ESP32"}
+                </span>
+              </div>
             </div>
-            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
-              <div 
-                className="bg-steel-blue h-full transition-all duration-500 rounded-full" 
-                style={{ width: `${project.progress || 100}%` }}
-              />
+
+            {/* RIGHT COLUMN: PROJECT TITLE, METADATA, DESCRIPTION, LINKS & PROGRESS */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className="px-3.5 py-1 rounded-full bg-slate-100 text-[#475569] font-bold text-[11px] border border-slate-200">
+                  {project.difficulty || "Intermediate"} Level
+                </span>
+                <span className="px-3.5 py-1 rounded-full bg-blue-50 text-steel-blue font-bold text-[11px] flex items-center gap-1 border border-blue-100">
+                  <Clock className="h-3.5 w-3.5" /> {project.status || "In Progress"}
+                </span>
+                <span className="text-cool-slate font-medium text-xs flex items-center gap-1 ml-auto">
+                  <Calendar className="h-3.5 w-3.5" /> Published {new Date(project.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              </div>
+
+              {/* Title & Short Description */}
+              <div className="space-y-3">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#0f172a] leading-tight font-heading tracking-tight">
+                  {project.title}
+                </h1>
+                <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+                  {project.short_description}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                {project.github_url && (
+                  <a 
+                    href={project.github_url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0f172a] hover:bg-navy-slate text-white text-xs font-bold transition-all shadow-2xs hover:scale-[1.01]"
+                  >
+                    <GithubIcon className="h-4 w-4" /> Source Code on GitHub
+                  </a>
+                )}
+                {project.video_url && (
+                  <a 
+                    href={project.video_url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-2xs"
+                  >
+                    <Video className="h-4 w-4" /> Watch YouTube Video <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+                {project.architecture_url && (
+                  <a 
+                    href={project.architecture_url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0f172a] border border-slate-200 text-xs font-bold transition-all"
+                  >
+                    <FileCode2 className="h-4 w-4 text-steel-blue" /> Circuit Diagram <ExternalLink className="h-3 w-3 text-cool-slate" />
+                  </a>
+                )}
+              </div>
+
+              {/* Build Progress Bar */}
+              <div className="space-y-2 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between text-xs font-bold text-[#0f172a]">
+                  <span>Build Completion Progress</span>
+                  <span className="font-mono text-steel-blue text-sm">{project.progress || 100}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+                  <div 
+                    className="bg-steel-blue h-full transition-all duration-500 rounded-full" 
+                    style={{ width: `${project.progress || 100}%` }}
+                  />
+                </div>
+              </div>
+
             </div>
+
           </div>
         </header>
 
-        {/* HERO FEATURE DISPLAY: COVER IMAGE OR VIDEO (FULL WIDESCREEN) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Main Cover Banner (Takes 7 or 12 cols depending on Video) */}
-          {project.image_url && (
-            <div className={`${youtubeData && youtubeData.embedUrl ? "lg:col-span-7" : "lg:col-span-12"} w-full aspect-video max-h-[500px] rounded-3xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900 relative`}>
-              <img 
-                src={project.image_url} 
-                alt={project.title} 
-                className="w-full h-full object-cover"
+        {/* EMBEDDED YOUTUBE VIDEO SECTION */}
+        {youtubeData && youtubeData.embedUrl && (
+          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-4">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
+              <Video className="h-5 w-5 text-red-600" /> Project Video Demonstration
+            </h2>
+            <div className="w-full aspect-video max-h-[650px] rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-xs">
+              <iframe
+                src={youtubeData.embedUrl}
+                title={project.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
               />
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Embedded YouTube Video (Side-by-Side on Desktop if Cover Image exists) */}
-          {youtubeData && youtubeData.embedUrl && (
-            <div className={`${project.image_url ? "lg:col-span-5" : "lg:col-span-12"} bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-3`}>
-              <h2 className="text-lg font-extrabold text-[#0f172a] font-heading flex items-center gap-2">
-                <Video className="h-5 w-5 text-red-600" /> Project Video Demonstration
-              </h2>
-              <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-xs">
-                <iframe
-                  src={youtubeData.embedUrl}
-                  title={project.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full border-0"
-                />
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* REQUIRED HARDWARE COMPONENTS (WIDESCREEN GRID) */}
+        {/* REQUIRED HARDWARE COMPONENTS (WIDESCREEN 4-COLUMN GRID) */}
         {componentsList.length > 0 && (
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-6">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
               <Wrench className="h-5 w-5 text-steel-blue" /> Required Hardware Components ({componentsList.length})
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {componentsList.map((comp, idx) => (
                 <div 
                   key={idx} 
@@ -204,18 +207,18 @@ export default async function ProjectPage({ params }: PageProps) {
                 >
                   <div className="space-y-2.5">
                     {comp.image_url ? (
-                      <div className="w-full aspect-video h-36 rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
+                      <div className="w-full aspect-video h-40 rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
                         <img src={comp.image_url} alt={comp.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-full h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-steel-blue">
-                        <Wrench className="h-5 w-5" />
+                      <div className="w-full h-14 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-steel-blue">
+                        <Wrench className="h-6 w-6" />
                       </div>
                     )}
 
-                    <h3 className="font-bold text-sm text-[#0f172a] leading-snug">{comp.name}</h3>
+                    <h3 className="font-bold text-base text-[#0f172a] leading-snug">{comp.name}</h3>
                     {comp.description && (
-                      <p className="text-xs text-cool-slate leading-relaxed">{comp.description}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{comp.description}</p>
                     )}
                   </div>
                 </div>
@@ -224,7 +227,7 @@ export default async function ProjectPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* STEP-BY-STEP TUTORIAL BUILD STEPS (WIDE LAYOUT) */}
+        {/* STEP-BY-STEP TUTORIAL BUILD STEPS (FULL WIDESCREEN STEP CARDS) */}
         {tutorialStepsList.length > 0 && (
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-6">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
@@ -238,22 +241,22 @@ export default async function ProjectPage({ params }: PageProps) {
                   className="p-6 sm:p-8 bg-slate-50 rounded-2xl border border-slate-200 space-y-4"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="px-3.5 py-1 rounded-full bg-steel-blue text-white text-xs font-extrabold shadow-xs">
+                    <span className="px-4 py-1 rounded-full bg-steel-blue text-white text-xs font-extrabold shadow-xs">
                       Step {step.step_number || idx + 1}
                     </span>
-                    <h3 className="text-xl font-bold text-[#0f172a] font-heading">
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#0f172a] font-heading">
                       {step.title}
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    <p className={`${step.image_url ? "lg:col-span-7" : "lg:col-span-12"} text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap`}>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <p className={`${step.image_url ? "lg:col-span-7" : "lg:col-span-12"} text-base sm:text-lg text-slate-700 leading-relaxed whitespace-pre-wrap`}>
                       {step.description}
                     </p>
 
                     {/* Step Image (Side-by-Side on Desktop) */}
                     {step.image_url && (
-                      <div className="lg:col-span-5 w-full aspect-video max-h-72 rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
+                      <div className="lg:col-span-5 w-full aspect-video max-h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
                         <img src={step.image_url} alt={step.title} className="w-full h-full object-cover" />
                       </div>
                     )}
@@ -264,7 +267,7 @@ export default async function ProjectPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* ARCHITECTURE / CIRCUIT DIAGRAM SECTION (FULL WIDTH) */}
+        {/* ARCHITECTURE / CIRCUIT DIAGRAM SECTION (FULL WIDESCREEN) */}
         {project.architecture_url && (
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-4">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
@@ -274,20 +277,20 @@ export default async function ProjectPage({ params }: PageProps) {
               <img 
                 src={project.architecture_url} 
                 alt="Architecture Diagram" 
-                className="max-h-[550px] object-contain w-auto rounded-xl"
+                className="max-h-[600px] object-contain w-auto rounded-xl"
               />
             </div>
           </div>
         )}
 
-        {/* MULTIPLE PROJECT PHOTO GALLERY (FULL WIDESCREEN GRID) */}
+        {/* MULTIPLE PROJECT PHOTO GALLERY (FULL WIDESCREEN 4-COLUMN GRID) */}
         {galleryImages.length > 0 && (
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-6">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
               <Images className="h-5 w-5 text-steel-blue" /> Additional Photo Gallery ({galleryImages.length})
             </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {galleryImages.map((imageUrl, idx) => (
                 <a 
                   key={idx} 
@@ -310,7 +313,7 @@ export default async function ProjectPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* BUILD LOG & SPECS (FULL WIDTH) */}
+        {/* ADDITIONAL BUILD NOTES / MARKDOWN */}
         {project.content && (
           <article className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-6">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2 pb-4 border-b border-slate-100">
