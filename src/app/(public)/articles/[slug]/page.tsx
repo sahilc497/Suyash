@@ -10,11 +10,20 @@ export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: article } = await supabase
+  let { data: article } = await supabase
     .from("articles")
     .select("*")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
+
+  if (!article) {
+    const { data: artById } = await supabase
+      .from("articles")
+      .select("*")
+      .eq("id", slug)
+      .maybeSingle();
+    article = artById;
+  }
 
   if (!article) {
     notFound();
