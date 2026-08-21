@@ -31,6 +31,9 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ProjectPage({ params }: PageProps) {
+  const { slug } = await params;
+  const supabase = await createClient();
+
   // Query by slug first, then fallback to id
   let { data: project } = await supabase
     .from("projects")
