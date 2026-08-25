@@ -233,3 +233,38 @@ VALUES
   ('Rigol DS1054Z Oscilloscope', 'Lab Equipment', '4-channel 50MHz digital storage oscilloscope.', 'https://rigol.com', '$370', true, 5),
   ('Bambu Lab X1-Carbon 3D Printer', 'Fabrication', 'High-speed FDM printer for carbon fiber and structural enclosures.', 'https://bambulab.com', '$1449', true, 6)
 ON CONFLICT DO NOTHING;
+
+-- ========================================================
+-- 9. RESOURCES TABLE (Technical Guides, Cheat Sheets & CAD)
+-- ========================================================
+CREATE TABLE IF NOT EXISTS public.resources (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  slug TEXT UNIQUE,
+  cover_image TEXT,
+  detail_text TEXT NOT NULL,
+  category TEXT DEFAULT 'General',
+  download_url TEXT,
+  is_published BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Row Level Security (RLS) for Resources
+ALTER TABLE public.resources ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public Read Access to Published Resources" ON public.resources 
+  FOR SELECT USING (is_published = true);
+
+CREATE POLICY "Admins Full Access to Resources" ON public.resources 
+  FOR ALL USING (true);
+
+-- Storage Bucket Setup for Resource Cover Images
+INSERT INTO storage.buckets (id, name, public) VALUES ('resource-covers', 'resource-covers', true) ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Public Storage Read resource-covers" ON storage.objects 
+  FOR SELECT USING (bucket_id = 'resource-covers');
+
+CREATE POLICY "Public Storage Insert resource-covers" ON storage.objects 
+  FOR INSERT WITH CHECK (bucket_id = 'resource-covers');
+

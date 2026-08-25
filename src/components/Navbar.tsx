@@ -30,6 +30,7 @@ export default function Navbar() {
     { href: "/projects", label: "Projects" },
     { href: "/videos", label: "Videos" },
     { href: "/articles", label: "Articles" },
+    { href: "/resources", label: "Resources" },
     { href: "/about", label: "About" },
   ];
 

@@ -33,6 +33,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/resources`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -83,6 +89,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           routes.push({
             url: `${baseUrl}/articles/${slugOrId}`,
             lastModified: new Date(article.updated_at || article.created_at || Date.now()),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+          });
+        });
+      }
+
+      // Add all published Resources to Sitemap
+      const { data: resources } = await supabase
+        .from('resources')
+        .select('slug, id, updated_at, created_at')
+        .eq('is_published', true);
+
+      if (resources && resources.length > 0) {
+        resources.forEach((resource) => {
+          const slugOrId = (resource.slug && !resource.slug.startsWith('http') && !resource.slug.includes('/'))
+            ? resource.slug
+            : resource.id;
+
+          routes.push({
+            url: `${baseUrl}/resources/${slugOrId}`,
+            lastModified: new Date(resource.updated_at || resource.created_at || Date.now()),
             changeFrequency: 'weekly',
             priority: 0.8,
           });
