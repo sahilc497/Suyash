@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import FormattedText from "@/components/FormattedText";
 import { Search, Download, ExternalLink, Tag, X, FileText, ArrowRight, BookOpen } from "lucide-react";
 
 export interface PublicResourceItem {

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import FormattedText from "@/components/FormattedText";
 import { ArrowLeft, Calendar, Download, ExternalLink, FileText, Tag, Sparkles, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 interface PageProps {
@@ -224,8 +225,8 @@ export default async function ResourceDetailsPage({ params }: PageProps) {
                 <Sparkles className="h-5 w-5 text-steel-blue" /> Resource Details & Overview
               </h2>
 
-              <div className="prose prose-slate max-w-none text-base sm:text-lg leading-relaxed text-slate-700 whitespace-pre-line font-sans">
-                {resource.detail_text}
+              <div className="prose prose-slate max-w-none text-base sm:text-lg leading-relaxed text-slate-700 font-sans">
+                <FormattedText content={resource.detail_text} />
               </div>
             </div>
 

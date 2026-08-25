@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import FormattedText from "@/components/FormattedText";
 import { Plus, Edit2, Trash2, Image as ImageIcon, Check, X, ExternalLink, AlertCircle, FileText, Download, Tag } from "lucide-react";
 import { ResourceItem } from "@/app/admin/resources/page";
 
@@ -330,9 +331,9 @@ export default function ResourcesManagerClient({ initialResources }: { initialRe
 
               {/* Resource Info */}
               <div className="p-4 space-y-3">
-                <p className="text-xs text-[#555555] line-clamp-3 leading-relaxed">
-                  {resource.detail_text}
-                </p>
+                <div className="text-xs text-[#555555] line-clamp-3 leading-relaxed">
+                  <FormattedText content={resource.detail_text} />
+                </div>
 
                 {resource.download_url && (
                   <a
