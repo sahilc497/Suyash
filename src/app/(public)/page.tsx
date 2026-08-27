@@ -97,7 +97,7 @@ export default async function Home() {
                     Explore Builds <ChevronRight className="h-3.5 w-3.5 rotate-90" />
                   </a>
                   <Link href="/about" className="text-xs font-bold px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-[#0f172a] transition-all border border-slate-200">
-                    About Lab Setup →
+                    About Suyash →
                   </Link>
                 </div>
               </div>
