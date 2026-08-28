@@ -11,7 +11,7 @@ function getEmbedUrl(url: string) {
 
   if (match && match[2].length === 11) {
     videoId = match[2];
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    return `https://www.youtube.com/embed/${videoId}`;
   }
   return url;
 }

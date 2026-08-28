@@ -26,7 +26,7 @@ export function parseYouTubeUrl(url: string) {
     : "/circuit-schematic.jpg";
 
   const embedUrl = videoId
-    ? `https://www.youtube.com/embed/${videoId}?autoplay=1`
+    ? `https://www.youtube.com/embed/${videoId}`
     : url;
 
   return { videoId, thumbnailUrl, embedUrl };
