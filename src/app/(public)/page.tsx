@@ -213,7 +213,12 @@ export default async function Home() {
               return (
                 <div key={video.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
                   <div>
-                    <Link href="/videos" className="w-full aspect-video bg-slate-900 overflow-hidden relative block">
+                    <a 
+                      href={video.content_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="w-full aspect-video bg-slate-900 overflow-hidden relative block"
+                    >
                       <img src={imageSrc} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold">
                         {video.category || "YouTube"}
@@ -223,10 +228,10 @@ export default async function Home() {
                           <Play className="h-6 w-6 fill-current ml-0.5" />
                         </div>
                       </div>
-                    </Link>
+                    </a>
                     <div className="p-5 space-y-2">
                       <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
-                        <Link href="/videos">{video.title}</Link>
+                        <a href={video.content_url} target="_blank" rel="noreferrer">{video.title}</a>
                       </h3>
                       <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
                         {video.description}
@@ -235,9 +240,14 @@ export default async function Home() {
                   </div>
 
                   <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 mt-2">
-                    <Link href="/videos" className="text-xs font-bold text-steel-blue hover:underline flex items-center gap-1">
-                      <Play className="h-3.5 w-3.5 fill-current" /> Watch Video
-                    </Link>
+                    <a 
+                      href={video.content_url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-xs font-bold text-steel-blue hover:underline flex items-center gap-1"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" /> Watch on YouTube
+                    </a>
                   </div>
                 </div>
               );
