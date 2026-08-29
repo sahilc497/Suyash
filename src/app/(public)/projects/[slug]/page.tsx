@@ -4,7 +4,7 @@ import { parseYouTubeUrl } from "@/lib/youtube";
 import Link from "next/link";
 import { 
   ArrowLeft, Calendar, FileCode2, ExternalLink, Sparkles, Clock, 
-  Images, Video, Wrench, ListOrdered, CheckCircle2, Layers 
+  Images, Video, Wrench, ListOrdered, CheckCircle2, Layers, Play 
 } from "lucide-react";
 
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -174,21 +174,50 @@ export default async function ProjectPage({ params }: PageProps) {
           </div>
         </header>
 
-        {/* EMBEDDED YOUTUBE VIDEO SECTION */}
-        {youtubeData && youtubeData.embedUrl && (
+        {/* YOUTUBE VIDEO DEMONSTRATION SECTION */}
+        {project.video_url && (
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-2xs space-y-4">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
-              <Video className="h-5 w-5 text-red-600" /> Project Video Demonstration
-            </h2>
-            <div className="w-full aspect-video max-h-[650px] rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-xs">
-              <iframe
-                src={youtubeData.embedUrl}
-                title={project.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight font-heading flex items-center gap-2">
+                <Video className="h-5 w-5 text-red-600" /> Project Video Demonstration
+              </h2>
+              <a 
+                href={project.video_url} 
+                target="_blank" 
+                rel="noreferrer"
+                className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline flex items-center gap-1.5"
+              >
+                Watch on YouTube <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
+            
+            <a 
+              href={project.video_url} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="w-full aspect-video max-h-[600px] rounded-2xl overflow-hidden bg-slate-950 relative group cursor-pointer border border-slate-200 shadow-xs hover:shadow-xl transition-all block"
+            >
+              <img 
+                src={youtubeData?.thumbnailUrl || project.image_url || "/circuit-schematic.jpg"} 
+                alt={project.title} 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" 
+              />
+              
+              <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/20 transition-all" />
+
+              <span className="absolute top-4 left-4 px-3.5 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-md">
+                <Play className="h-3.5 w-3.5 fill-current" /> YouTube Video
+              </span>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-red-700 transition-all duration-300">
+                  <Play className="h-8 w-8 sm:h-10 sm:w-10 fill-current ml-1" />
+                </div>
+                <span className="px-4 py-2 rounded-xl bg-slate-900/90 backdrop-blur-md text-white text-xs sm:text-sm font-extrabold tracking-wide border border-white/10 shadow-lg group-hover:bg-red-600 transition-colors flex items-center gap-2">
+                  Click to Watch Full Demonstration on YouTube <ExternalLink className="h-4 w-4" />
+                </span>
+              </div>
+            </a>
           </div>
         )}
 
