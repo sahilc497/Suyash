@@ -25,19 +25,23 @@ export default function AboutPage() {
             <div className="flex-1 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold font-mono">
                 <span className="h-2 w-2 rounded-full bg-cyan-600 animate-pulse" />
-                HARDWARE & SYSTEMS ENGINEER
+                E&TC ENGINEERING STUDENT • HOBBYIST • BUILDER • CREATOR
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
                 Suyash Desai
               </h2>
 
-              <p className="text-base sm:text-lg text-slate-700 leading-relaxed">
-                Hi, I'm <strong>Suyash Desai</strong>—an Electronics & Telecommunication engineering student and passionate hardware creator. My work focuses on bridging the gap between low-level electronics and high-level software.
+              <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-medium">
+                Hi, I'm <strong>Suyash!!</strong> An Electronics & Telecommunication engineering student and a hobbyist who enjoys building things with electronics, robotics, and technology.
               </p>
 
               <p className="text-base text-slate-600 leading-relaxed">
-                I design and build physical hardware systems from scratch—ranging from custom flight controllers and autonomous navigation robots to embedded AI edge devices and connected IoT systems.
+                I like taking an idea, experimenting with it, figuring out how the hardware and software work together, and turning it into something real. A lot of what I learn comes from simply building, breaking, debugging, and trying again.
+              </p>
+
+              <p className="text-base text-slate-600 leading-relaxed">
+                I also create and share engineering content to make technical concepts, project ideas, and things I've learned easier for other students and curious makers to explore.
               </p>
             </div>
           </div>

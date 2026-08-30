@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Inter, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -47,6 +48,19 @@ export default function RootLayout({
       <body
         className="min-h-full flex flex-col bg-[#f8fafc] text-[#0f172a] antialiased font-sans"
       >
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-RD8681HVE0"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-RD8681HVE0');
+          `}
+        </Script>
         {children}
       </body>
     </html>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { 
   Play, Cpu, ArrowRight, ChevronRight, Eye, 
-  Code2, Cloud, Wrench, FileText, Layers, Video, Plus, Sparkles
+  Code2, Cloud, Wrench, FileText, Layers, Video, Plus, Sparkles, FolderOpen, Download
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import HeroSlideshow from "@/components/HeroSlideshow";
@@ -27,6 +27,7 @@ export default async function Home() {
   let projects: any[] = [];
   let videos: any[] = [];
   let articles: any[] = [];
+  let resources: any[] = [];
   
   try {
     const supabase = await createClient();
@@ -37,7 +38,7 @@ export default async function Home() {
       .select("*")
       .eq("is_published", true)
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(4);
       
     if (fetchedProjects) projects = fetchedProjects;
 
@@ -46,7 +47,7 @@ export default async function Home() {
       .from("social_posts")
       .select("*")
       .order("published_at", { ascending: false })
-      .limit(3);
+      .limit(4);
 
     if (fetchedVideos) videos = fetchedVideos;
 
@@ -60,9 +61,60 @@ export default async function Home() {
 
     if (fetchedArticles) articles = fetchedArticles;
 
+    // Fetch published resources
+    const { data: fetchedResources } = await supabase
+      .from("resources")
+      .select("*")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(4);
+
+    if (fetchedResources) resources = fetchedResources;
+
   } catch (error) {
     console.error("Failed to fetch data from Supabase:", error);
   }
+
+  const defaultResources = [
+    {
+      id: "res-1",
+      title: "ESP32 Pinout Cheat Sheet & Hardware Reference",
+      cover_image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+      detail_text: "Comprehensive pin mapping, ADC attenuation guide, and GPIO pull-up/pull-down restrictions for ESP32-WROOM-32 and ESP32-S3 boards.",
+      category: "Cheat Sheet",
+      download_url: "https://github.com/astrix884",
+      slug: "esp32-pinout-cheat-sheet",
+    },
+    {
+      id: "res-2",
+      title: "KiCad 8 Custom Component Library for Robotics",
+      cover_image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+      detail_text: "Curated 3D footprints and schematic symbols for popular motor drivers, IMUs, buck converters, and lithium charging modules.",
+      category: "CAD & PCB",
+      download_url: "https://github.com/astrix884",
+      slug: "kicad-8-custom-component-library",
+    },
+    {
+      id: "res-3",
+      title: "Embedded C++ System Architecture Guide",
+      cover_image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+      detail_text: "Architectural blueprint for real-time sensor processing loops, FreeRTOS task scheduling, zero-copy buffer allocations, and state machines.",
+      category: "Guide & Code",
+      download_url: "https://github.com/astrix884",
+      slug: "embedded-cpp-system-architecture",
+    },
+    {
+      id: "res-4",
+      title: "LiPo Battery Management & Protection Circuit Schematic",
+      cover_image: "https://images.unsplash.com/photo-1597733336794-12d05021d510?auto=format&fit=crop&w=800&q=80",
+      detail_text: "Reference schematic for 1S/2S LiPo charging using TP4056 and DW01 protection ICs with load sharing circuitry.",
+      category: "Schematics",
+      download_url: "https://github.com/astrix884",
+      slug: "lipo-battery-management-schematic",
+    },
+  ];
+
+  const displayResources = resources.length > 0 ? resources : defaultResources;
 
   return (
     <div className="w-full bg-[#f8fafc] text-[#0f172a] font-sans min-h-screen flex flex-col">
@@ -81,7 +133,7 @@ export default async function Home() {
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-steel-blue animate-pulse" />
-                  <span className="font-mono text-[11px] text-steel-blue tracking-wider uppercase font-bold">HARDWARE & SYSTEMS ENGINEER</span>
+                  <span className="font-mono text-[11px] text-steel-blue tracking-wider uppercase font-bold">E&TC STUDENT • BUILDER • CREATOR</span>
                 </div>
                 
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight font-heading">
@@ -89,7 +141,7 @@ export default async function Home() {
                 </h1>
                 
                 <p className="text-xs sm:text-sm leading-relaxed text-cool-slate">
-                  I build technology in the real world. My work explores the intersection of hardware and software—from embedded systems and autonomous robotics to AI-powered edge computing devices.
+                  Hi, I'm Suyash!! An Electronics & Telecommunication engineering student and a hobbyist who enjoys building things with electronics, robotics, and technology.
                 </p>
                 
                 <div className="pt-1 flex flex-wrap items-center gap-2.5">
@@ -137,50 +189,149 @@ export default async function Home() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-            {projects.map((project, idx) => {
-              const projectUrl = (project.slug && !project.slug.startsWith("http") && !project.slug.includes("/"))
-                ? `/projects/${project.slug}`
-                : `/projects/${project.id}`;
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {projects.slice(0, 4).map((project, idx) => {
+                const projectUrl = (project.slug && !project.slug.startsWith("http") && !project.slug.includes("/"))
+                  ? `/projects/${project.slug}`
+                  : `/projects/${project.id}`;
 
-              return (
-                <div key={project.id || idx} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-                  <div>
-                    <Link href={projectUrl} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
-                      <img 
-                        src={project.image_url || "/circuit-schematic.jpg"} 
-                        alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      />
-                      <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
-                        {project.category || "IoT"}
-                      </span>
-                    </Link>
-                    <div className="p-4 space-y-2">
-                      <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
-                        <Link href={projectUrl}>{project.title}</Link>
-                      </h3>
-                      <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
-                        {project.short_description}
-                      </p>
+                return (
+                  <div 
+                    key={project.id || idx} 
+                    className={`group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${idx >= 2 ? "hidden sm:flex" : "flex"}`}
+                  >
+                    <div>
+                      <Link href={projectUrl} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
+                        <img 
+                          src={project.image_url || "/circuit-schematic.jpg"} 
+                          alt={project.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        />
+                        <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
+                          {project.category || "IoT"}
+                        </span>
+                      </Link>
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
+                          <Link href={projectUrl}>{project.title}</Link>
+                        </h3>
+                        <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
+                          {project.short_description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 pt-0 flex flex-wrap gap-1.5">
+                      {(project.tags || ["ESP32", "MQTT"]).map((tag: string) => (
+                        <span key={tag} className="px-2 py-0.5 rounded-md bg-slate-100 text-[#475569] text-[10px] font-semibold">
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                <div className="p-4 pt-0 flex flex-wrap gap-1.5">
-                  {(project.tags || ["ESP32", "MQTT"]).map((tag: string) => (
-                    <span key={tag} className="px-2 py-0.5 rounded-md bg-slate-100 text-[#475569] text-[10px] font-semibold">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+            {/* Mobile View All Button */}
+            <div className="mt-6 flex justify-center sm:hidden">
+              <Link 
+                href="/projects" 
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white border border-slate-200 text-steel-blue font-bold text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-2xs"
+              >
+                View All Projects <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
         )}
       </section>
 
-      {/* 3. YOUTUBE VIDEOS SECTION (Placed directly below Projects section) */}
+      {/* 3. LATEST RESOURCES SECTION (Placed below Featured Projects & above Video Build Logs) */}
+      <section className="w-full max-w-7xl mx-auto px-6 md:px-12 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <span className="font-mono text-xs text-steel-blue font-bold tracking-wider uppercase">FREE DOWNLOADS & SCHEMATICS</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight font-heading">
+              Latest Engineering Resources
+            </h2>
+          </div>
+          <Link href="/resources" className="text-sm font-semibold text-steel-blue hover:underline flex items-center gap-1">
+            View all resources <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        {displayResources.length === 0 ? (
+          <div className="p-10 bg-white rounded-3xl border border-dashed border-slate-300 text-center space-y-2 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-steel-blue flex items-center justify-center mx-auto">
+              <FolderOpen className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-[#0f172a]">No resources published yet</h3>
+            <p className="text-xs text-cool-slate max-w-md mx-auto">
+              Pinout cheat sheets, CAD libraries, and schematics will appear here.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {displayResources.slice(0, 4).map((resource: any, idx: number) => {
+                const resourceUrl = (resource.slug && !resource.slug.startsWith("http") && !resource.slug.includes("/"))
+                  ? `/resources/${resource.slug}`
+                  : resource.download_url || `/resources/${resource.id}`;
+
+                return (
+                  <div 
+                    key={resource.id || idx} 
+                    className={`group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${idx >= 2 ? "hidden sm:flex" : "flex"}`}
+                  >
+                    <div>
+                      <Link href={resourceUrl} className="w-full aspect-video bg-slate-900 overflow-hidden block relative">
+                        <img 
+                          src={resource.cover_image || "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"} 
+                          alt={resource.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        />
+                        <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
+                          {resource.category || "Resource"}
+                        </span>
+                      </Link>
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors line-clamp-1">
+                          <Link href={resourceUrl}>{resource.title}</Link>
+                        </h3>
+                        <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
+                          {resource.detail_text}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 pt-0">
+                      <Link 
+                        href={resourceUrl} 
+                        className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-steel-blue font-semibold text-xs transition-all border border-slate-200/80 flex items-center justify-center gap-1.5 group-hover:border-steel-blue/30"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Download / View
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mobile View All Button */}
+            <div className="mt-6 flex justify-center sm:hidden">
+              <Link 
+                href="/resources" 
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white border border-slate-200 text-steel-blue font-bold text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-2xs"
+              >
+                View All Resources <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* 4. YOUTUBE VIDEOS SECTION (Placed directly below Resources section) */}
       <section className="w-full max-w-7xl mx-auto px-6 md:px-12 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
@@ -205,58 +356,73 @@ export default async function Home() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {videos.map((video) => {
-              const { thumbnailUrl } = parseYouTubeUrl(video.content_url || "");
-              const imageSrc = video.thumbnail_url || thumbnailUrl;
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {videos.slice(0, 4).map((video, idx) => {
+                const { thumbnailUrl } = parseYouTubeUrl(video.content_url || "");
+                const imageSrc = video.thumbnail_url || thumbnailUrl;
 
-              return (
-                <div key={video.id} className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between">
-                  <div>
-                    <a 
-                      href={video.content_url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="w-full aspect-video bg-slate-900 overflow-hidden relative block"
-                    >
-                      <img src={imageSrc} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold">
-                        {video.category || "YouTube"}
-                      </span>
-                      <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/50 flex items-center justify-center transition-all">
-                        <div className="w-12 h-12 rounded-full bg-white text-steel-blue flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                          <Play className="h-6 w-6 fill-current ml-0.5" />
+                return (
+                  <div 
+                    key={video.id || idx} 
+                    className={`group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between ${idx >= 2 ? "hidden sm:flex" : "flex"}`}
+                  >
+                    <div>
+                      <a 
+                        href={video.content_url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="w-full aspect-video bg-slate-900 overflow-hidden relative block"
+                      >
+                        <img src={imageSrc} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold">
+                          {video.category || "YouTube"}
+                        </span>
+                        <div className="absolute inset-0 bg-slate-950/30 group-hover:bg-slate-950/50 flex items-center justify-center transition-all">
+                          <div className="w-12 h-12 rounded-full bg-white text-steel-blue flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <Play className="h-6 w-6 fill-current ml-0.5" />
+                          </div>
                         </div>
+                      </a>
+                      <div className="p-4 space-y-2">
+                        <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors line-clamp-2">
+                          <a href={video.content_url} target="_blank" rel="noreferrer">{video.title}</a>
+                        </h3>
+                        <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
+                          {video.description}
+                        </p>
                       </div>
-                    </a>
-                    <div className="p-5 space-y-2">
-                      <h3 className="text-base font-bold text-[#0f172a] leading-snug group-hover:text-steel-blue transition-colors">
-                        <a href={video.content_url} target="_blank" rel="noreferrer">{video.title}</a>
-                      </h3>
-                      <p className="text-xs text-cool-slate leading-relaxed line-clamp-2">
-                        {video.description}
-                      </p>
+                    </div>
+
+                    <div className="p-4 pt-0 flex items-center justify-between border-t border-slate-100 mt-2">
+                      <a 
+                        href={video.content_url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-xs font-bold text-steel-blue hover:underline flex items-center gap-1"
+                      >
+                        <Play className="h-3.5 w-3.5 fill-current" /> Watch on YouTube
+                      </a>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 mt-2">
-                    <a 
-                      href={video.content_url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-xs font-bold text-steel-blue hover:underline flex items-center gap-1"
-                    >
-                      <Play className="h-3.5 w-3.5 fill-current" /> Watch on YouTube
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            {/* Mobile Explore All Button */}
+            <div className="mt-6 flex justify-center sm:hidden">
+              <Link 
+                href="/videos" 
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white border border-slate-200 text-steel-blue font-bold text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-2xs"
+              >
+                Explore All Videos <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </>
         )}
       </section>
 
-      {/* 4. ARTICLES & TUTORIALS SECTION (Only rendered when real articles exist in database) */}
+      {/* 5. ARTICLES & TUTORIALS SECTION (Only rendered when real articles exist in database) */}
       {articles.length > 0 && (
         <section className="w-full max-w-7xl mx-auto px-6 md:px-12 py-8">
           <div className="flex items-center justify-between mb-6">
@@ -269,8 +435,11 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {articles.map((article) => (
-              <div key={article.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs p-3 flex gap-3 items-center hover:shadow-sm transition-all">
+            {articles.slice(0, 4).map((article, idx) => (
+              <div 
+                key={article.id || idx} 
+                className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs p-3 flex gap-3 items-center hover:shadow-sm transition-all ${idx >= 2 ? "hidden sm:flex" : "flex"}`}
+              >
                 <div className="w-20 h-20 rounded-xl bg-slate-900 overflow-hidden shrink-0">
                   <img src={article.cover_image || "/circuit-board-header.jpg"} alt={article.title} className="w-full h-full object-cover" />
                 </div>
@@ -285,6 +454,16 @@ export default async function Home() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Mobile View All Button */}
+          <div className="mt-6 flex justify-center sm:hidden">
+            <Link 
+              href="/articles" 
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-white border border-slate-200 text-steel-blue font-bold text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-2xs"
+            >
+              View All Articles <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </section>
       )}
@@ -302,7 +481,7 @@ export default async function Home() {
                   Hey, <span className="font-extrabold">I'm Suyash.</span>
                 </h3>
                 <p className="text-xs sm:text-sm text-[#475569] leading-relaxed max-w-xl">
-                  An Electronics & Telecommunication engineering student and a passionate builder. I love turning ideas into real working prototypes and sharing the process with you.
+                  An Electronics & Telecommunication engineering student, passionate builder, and hobbyist. I love turning ideas into reality and sharing the process with you.
                 </p>
                 <div className="pt-2 flex items-center gap-4 justify-center sm:justify-start">
                   <Link href="/about" className="text-xs font-semibold text-steel-blue hover:underline flex items-center gap-1">
