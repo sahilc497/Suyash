@@ -24,7 +24,7 @@ export default function AboutPage() {
 
             <div className="flex-1 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold font-mono">
-                <span className="h-2 w-2 rounded-full bg-cyan-600 animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-cyan-600" />
                 E&TC ENGINEERING STUDENT • HOBBYIST • BUILDER • CREATOR
               </div>
 

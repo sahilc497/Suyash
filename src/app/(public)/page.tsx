@@ -132,7 +132,7 @@ export default async function Home() {
               
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-steel-blue animate-pulse" />
+                  <span className="h-2 w-2 rounded-full bg-steel-blue" />
                   <span className="font-mono text-[11px] text-steel-blue tracking-wider uppercase font-bold">E&TC STUDENT • BUILDER • CREATOR</span>
                 </div>
                 
