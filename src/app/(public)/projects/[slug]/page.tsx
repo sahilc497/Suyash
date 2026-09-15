@@ -83,7 +83,7 @@ export default async function ProjectPage({ params }: PageProps) {
             
             {/* LEFT COLUMN: PROJECT COVER IMAGE / BANNER */}
             <div className="lg:col-span-5 w-full">
-              <div className="w-full aspect-video lg:aspect-4/3 max-h-[480px] rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900 relative">
+              <div className="w-full aspect-video lg:aspect-4/3 max-h-120 rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900 relative">
                 <img 
                   src={project.image_url || "/circuit-schematic.jpg"} 
                   alt={project.title} 
@@ -195,7 +195,7 @@ export default async function ProjectPage({ params }: PageProps) {
               href={project.video_url} 
               target="_blank" 
               rel="noreferrer" 
-              className="w-full aspect-video max-h-[600px] rounded-2xl overflow-hidden bg-slate-950 relative group cursor-pointer border border-slate-200 shadow-xs hover:shadow-xl transition-all block"
+              className="w-full aspect-video max-h-150 rounded-2xl overflow-hidden bg-slate-950 relative group cursor-pointer border border-slate-200 shadow-xs hover:shadow-xl transition-all block"
             >
               <img 
                 src={youtubeData?.thumbnailUrl || project.image_url || "/circuit-schematic.jpg"} 
@@ -306,7 +306,7 @@ export default async function ProjectPage({ params }: PageProps) {
               <img 
                 src={project.architecture_url} 
                 alt="Architecture Diagram" 
-                className="max-h-[600px] object-contain w-auto rounded-xl"
+                className="max-h-150 object-contain w-auto rounded-xl"
               />
             </div>
           </div>

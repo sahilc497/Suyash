@@ -4,7 +4,7 @@ import PublicResourcesClient, { PublicResourceItem } from "@/app/(public)/resour
 
 export const metadata: Metadata = {
   title: "Resources & Engineering Library | Ideas by Suyash",
-  description: "Download pinout cheat sheets, CAD component libraries, schematic templates, and embedded hardware guides created by Suyash Desai.",
+  description: "A collection of project ideas, useful websites, software, tools, guides, and other resources to help students, hobbyists, and makers learn, explore, and build.",
 };
 
 export default async function ResourcesPage() {
@@ -76,14 +76,11 @@ export default async function ResourcesPage() {
 
         {/* Hero Section */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/80 text-steel-blue text-xs font-bold uppercase tracking-wider">
-            <span>📚 Technical Resource Hub</span>
-          </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#0f172a] font-heading">
             Engineering Tools, Guides & Libraries
           </h1>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-            Free developer resources, hardware pinouts, KiCad PCB footprints, code templates, and schematics curated for robotics, IoT, and embedded electronics developers.
+            A collection of project ideas, useful websites, software, tools, guides, and other resources to help students, hobbyists, and makers learn, explore, and build.
           </p>
         </div>
 
