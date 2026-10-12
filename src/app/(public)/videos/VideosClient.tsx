@@ -24,6 +24,8 @@ export default function VideosClient({ initialVideos }: { initialVideos: VideoIt
                 <img 
                   src={video.thumbnail_url || "/circuit-schematic.jpg"} 
                   alt={video.title}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 

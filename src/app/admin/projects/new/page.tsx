@@ -8,6 +8,7 @@ import {
   Layers, Wrench, ListOrdered, X, ArrowUp, ArrowDown 
 } from "lucide-react";
 import Link from "next/link";
+import { optimizeImageBeforeUpload } from "@/lib/imageOptimization";
 
 interface ComponentItem {
   id: string;
@@ -83,13 +84,22 @@ export default function NewProjectPage() {
   const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
     try {
       const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const { blob, contentType, cacheControl } = await optimizeImageBeforeUpload(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.82,
+      });
+
+      const fileName = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.webp`;
       const filePath = `${folder}/${fileName}`;
 
       const { error } = await supabase.storage
         .from('project-covers')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, blob, {
+          contentType: contentType || 'image/webp',
+          cacheControl: cacheControl || '31536000, immutable',
+          upsert: true,
+        });
 
       if (error) {
         console.error("Storage upload error:", error);

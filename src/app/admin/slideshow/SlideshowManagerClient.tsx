@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import { Plus, Edit2, Trash2, Video, Image as ImageIcon, Check, X, ExternalLink, AlertCircle } from "lucide-react";
+import { optimizeImageBeforeUpload } from "@/lib/imageOptimization";
 
 interface SlideItem {
   id: string;
@@ -82,13 +83,22 @@ export default function SlideshowManagerClient({ initialSlides }: { initialSlide
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
     try {
       const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `slide_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const { blob, contentType, cacheControl } = await optimizeImageBeforeUpload(file, {
+        maxWidth: 1600,
+        maxHeight: 1000,
+        quality: 0.82,
+      });
+
+      const fileName = `slide_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.webp`;
       const filePath = `slideshow/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('slideshow-images')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, blob, {
+          contentType: contentType || 'image/webp',
+          cacheControl: cacheControl || '31536000, immutable',
+          upsert: true,
+        });
 
       if (error) {
         console.error("Storage upload error:", error);

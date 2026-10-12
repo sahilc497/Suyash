@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import Link from "next/link";
@@ -15,14 +16,35 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Deduplicated per-request fetcher using React cache
+const getProject = cache(async (slug: string) => {
+  try {
+    const supabase = await createClient();
+    let { data: project } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (!project) {
+      const { data: projectById } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", slug)
+        .maybeSingle();
+      project = projectById;
+    }
+
+    return project || null;
+  } catch (err) {
+    console.error("Failed to query project by slug/id:", err);
+    return null;
+  }
+});
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-  let { data: project } = await supabase.from("projects").select("title, short_description").eq("slug", slug).maybeSingle();
-  if (!project) {
-    const { data: projById } = await supabase.from("projects").select("title, short_description").eq("id", slug).maybeSingle();
-    project = projById;
-  }
+  const project = await getProject(slug);
 
   return {
     title: project ? `${project.title} | Ideas by Suyash` : "Project Details",
@@ -32,23 +54,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ProjectPage({ params }: PageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-
-  // Query by slug first, then fallback to id
-  let { data: project } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (!project) {
-    const { data: projectById } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", slug)
-      .maybeSingle();
-    project = projectById;
-  }
+  const project = await getProject(slug);
 
   if (!project) {
     notFound();
@@ -87,6 +93,8 @@ export default async function ProjectPage({ params }: PageProps) {
                 <img 
                   src={project.image_url || "/circuit-schematic.jpg"} 
                   alt={project.title} 
+                  loading="eager"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
                 <span className="absolute top-4 left-4 px-3.5 py-1 rounded-full bg-steel-blue text-white font-extrabold tracking-wide uppercase text-[11px] shadow-sm">
@@ -200,6 +208,8 @@ export default async function ProjectPage({ params }: PageProps) {
               <img 
                 src={youtubeData?.thumbnailUrl || project.image_url || "/circuit-schematic.jpg"} 
                 alt={project.title} 
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" 
               />
               
@@ -237,7 +247,7 @@ export default async function ProjectPage({ params }: PageProps) {
                   <div className="space-y-2.5">
                     {comp.image_url ? (
                       <div className="w-full aspect-video h-40 rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
-                        <img src={comp.image_url} alt={comp.name} className="w-full h-full object-cover" />
+                        <img src={comp.image_url} alt={comp.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       </div>
                     ) : (
                       <div className="w-full h-14 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-steel-blue">
@@ -286,7 +296,7 @@ export default async function ProjectPage({ params }: PageProps) {
                     {/* Step Image (Side-by-Side on Desktop) */}
                     {step.image_url && (
                       <div className="lg:col-span-5 w-full aspect-video max-h-80 rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
-                        <img src={step.image_url} alt={step.title} className="w-full h-full object-cover" />
+                        <img src={step.image_url} alt={step.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                       </div>
                     )}
                   </div>
@@ -306,6 +316,8 @@ export default async function ProjectPage({ params }: PageProps) {
               <img 
                 src={project.architecture_url} 
                 alt="Architecture Diagram" 
+                loading="lazy"
+                decoding="async"
                 className="max-h-150 object-contain w-auto rounded-xl"
               />
             </div>
@@ -331,6 +343,8 @@ export default async function ProjectPage({ params }: PageProps) {
                   <img 
                     src={imageUrl} 
                     alt={`${project.title} photo ${idx + 1}`} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-xs">

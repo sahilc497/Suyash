@@ -35,7 +35,7 @@ export default async function Home() {
     // Fetch published projects
     const { data: fetchedProjects } = await supabase
       .from("projects")
-      .select("*")
+      .select("id, title, slug, image_url, category, short_description, tags, difficulty, status, progress, created_at")
       .eq("is_published", true)
       .order("created_at", { ascending: false })
       .limit(4);
@@ -45,7 +45,7 @@ export default async function Home() {
     // Fetch videos from social_posts table
     const { data: fetchedVideos } = await supabase
       .from("social_posts")
-      .select("*")
+      .select("id, title, thumbnail_url, content_url, content_type, platform, published_at")
       .order("published_at", { ascending: false })
       .limit(4);
 
@@ -54,7 +54,7 @@ export default async function Home() {
     // Fetch articles
     const { data: fetchedArticles } = await supabase
       .from("articles")
-      .select("*")
+      .select("id, title, slug, cover_image, reading_time, category, created_at")
       .eq("is_published", true)
       .order("created_at", { ascending: false })
       .limit(4);
@@ -64,7 +64,7 @@ export default async function Home() {
     // Fetch published resources
     const { data: fetchedResources } = await supabase
       .from("resources")
-      .select("*")
+      .select("id, title, slug, cover_image, category, detail_text, download_url, created_at")
       .eq("is_published", true)
       .order("created_at", { ascending: false })
       .limit(4);
@@ -206,6 +206,8 @@ export default async function Home() {
                         <img 
                           src={project.image_url || "/circuit-schematic.jpg"} 
                           alt={project.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                         />
                         <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
@@ -289,6 +291,8 @@ export default async function Home() {
                         <img 
                           src={resource.cover_image || "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"} 
                           alt={resource.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                         />
                         <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide">
@@ -374,7 +378,7 @@ export default async function Home() {
                         rel="noreferrer" 
                         className="w-full aspect-video bg-slate-900 overflow-hidden relative block"
                       >
-                        <img src={imageSrc} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={imageSrc} alt={video.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-steel-blue text-white text-[11px] font-bold">
                           {video.category || "YouTube"}
                         </span>
@@ -441,7 +445,7 @@ export default async function Home() {
                 className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs p-3 flex gap-3 items-center hover:shadow-sm transition-all ${idx >= 2 ? "hidden sm:flex" : "flex"}`}
               >
                 <div className="w-20 h-20 rounded-xl bg-slate-900 overflow-hidden shrink-0">
-                  <img src={article.cover_image || "/circuit-board-header.jpg"} alt={article.title} className="w-full h-full object-cover" />
+                  <img src={article.cover_image || "/circuit-board-header.jpg"} alt={article.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <h3 className="text-xs font-bold text-[#0f172a] leading-snug truncate">

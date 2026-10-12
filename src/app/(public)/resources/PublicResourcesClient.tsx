@@ -103,6 +103,8 @@ export default function PublicResourcesClient({ initialResources }: { initialRes
                     <img
                       src={resource.cover_image || "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80"}
                       alt={resource.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />

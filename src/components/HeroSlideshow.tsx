@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft, ChevronRight, Sparkles, Play, ExternalLink } from "lucide-react";
 
@@ -20,7 +20,7 @@ const defaultSeedSlides: Slide[] = [
     title: "ESP32 Handheld Game Console",
     category: "EMBEDDED HARDWARE",
     description: "Custom perfboard gaming handheld powered by ESP32 with SPI display & physical controls.",
-    image: "/slideshow/slide1.png",
+    image: "/slideshow/slide1.webp",
     video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
   },
   {
@@ -28,7 +28,7 @@ const defaultSeedSlides: Slide[] = [
     title: "Ideas by Suyash Studio & YouTube",
     category: "LAB SETUP & YOUTUBE",
     description: "Over 110+ engineering videos documenting robotics, IoT, and custom circuits.",
-    image: "/slideshow/slide2.png",
+    image: "/slideshow/slide2.webp",
     video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
   },
   {
@@ -36,7 +36,7 @@ const defaultSeedSlides: Slide[] = [
     title: "Autonomous 4WD Mobile Rover",
     category: "AUTONOMOUS ROBOTICS",
     description: "4-wheel drive robotic platform equipped with smartphone gimbal vision & motor driver shield.",
-    image: "/slideshow/slide3.jpg",
+    image: "/slideshow/slide3.webp",
     video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
   },
   {
@@ -44,7 +44,7 @@ const defaultSeedSlides: Slide[] = [
     title: "Long Range RF Transceiver Module",
     category: "RADIO TELEMETRY",
     description: "Custom wireless telemetry transmitter board designed for real-time sensor data link.",
-    image: "/slideshow/slide4.png",
+    image: "/slideshow/slide4.webp",
     video_url: "https://www.youtube.com/@IdeasbySuyashDesai",
   },
 ];
@@ -53,6 +53,7 @@ export default function HeroSlideshow() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const visitedIndicesRef = useRef<Set<number>>(new Set([0]));
 
   // Fetch active slides directly from Supabase DB
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function HeroSlideshow() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("slideshow_slides")
-          .select("*")
+          .select("id, title, category, description, image_url, video_url, display_order")
           .eq("is_active", true)
           .order("display_order", { ascending: true });
 
@@ -115,17 +116,30 @@ export default function HeroSlideshow() {
   useEffect(() => {
     if (isPaused || slides.length === 0) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % slides.length;
+        visitedIndicesRef.current.add(nextIndex);
+        visitedIndicesRef.current.add((nextIndex + 1) % slides.length);
+        return nextIndex;
+      });
     }, 4500);
     return () => clearInterval(interval);
   }, [isPaused, slides.length]);
 
   const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + slides.length) % slides.length);
+    setCurrentIndex((prevIndex) => {
+      const nextIndex = (prevIndex - 1 + slides.length) % slides.length;
+      visitedIndicesRef.current.add(nextIndex);
+      return nextIndex;
+    });
   };
 
   const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
+    setCurrentIndex((prevIndex) => {
+      const nextIndex = (prevIndex + 1) % slides.length;
+      visitedIndicesRef.current.add(nextIndex);
+      return nextIndex;
+    });
   };
 
   if (slides.length === 0) {
@@ -153,6 +167,7 @@ export default function HeroSlideshow() {
       {/* Slides Container */}
       {slides.map((slide, index) => {
         const isActive = index === currentIndex;
+        const shouldLoad = index === 0 || visitedIndicesRef.current.has(index);
         return (
           <div
             key={slide.id}
@@ -162,11 +177,18 @@ export default function HeroSlideshow() {
           >
             {/* Background Image with Ratio Optimization */}
             <div className="w-full h-full bg-[#18181b] flex items-center justify-center overflow-hidden">
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-all duration-700 ease-out"
-              />
+              {shouldLoad ? (
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-all duration-700 ease-out"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#18181b]" />
+              )}
             </div>
 
             {/* Gradient Overlay for Readability */}

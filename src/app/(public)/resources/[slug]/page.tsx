@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import FormattedText from "@/components/FormattedText";
@@ -74,26 +75,36 @@ Compatible with ESP-IDF, STM32 HAL, FreeRTOS, and Arduino C++.`,
   },
 ];
 
-export async function generateMetadata({ params }: PageProps) {
-  const { slug } = await params;
-  let resource: any = null;
-
+// Deduplicated per-request fetcher using React cache
+const getResource = cache(async (slug: string) => {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.from("resources").select("title, detail_text").eq("slug", slug).maybeSingle();
-    resource = data;
+    let { data } = await supabase
+      .from("resources")
+      .select("id, title, slug, cover_image, detail_text, category, download_url, created_at")
+      .eq("slug", slug)
+      .maybeSingle();
 
-    if (!resource) {
-      const { data: resById } = await supabase.from("resources").select("title, detail_text").eq("id", slug).maybeSingle();
-      resource = resById;
+    if (!data) {
+      const { data: resById } = await supabase
+        .from("resources")
+        .select("id, title, slug, cover_image, detail_text, category, download_url, created_at")
+        .eq("id", slug)
+        .maybeSingle();
+      data = resById;
     }
+
+    if (data) return data;
   } catch (err) {
-    console.error(err);
+    console.error("Failed to query resource by slug/id:", err);
   }
 
-  if (!resource) {
-    resource = defaultResources.find((r) => r.slug === slug || r.id === slug);
-  }
+  return defaultResources.find((r) => r.slug === slug || r.id === slug) || null;
+});
+
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params;
+  const resource = await getResource(slug);
 
   return {
     title: resource ? `${resource.title} | Ideas by Suyash` : "Resource Details",
@@ -103,34 +114,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ResourceDetailsPage({ params }: PageProps) {
   const { slug } = await params;
-  let resource: any = null;
-
-  try {
-    const supabase = await createClient();
-
-    let { data } = await supabase
-      .from("resources")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (!data) {
-      const { data: resById } = await supabase
-        .from("resources")
-        .select("*")
-        .eq("id", slug)
-        .maybeSingle();
-      data = resById;
-    }
-
-    resource = data;
-  } catch (err) {
-    console.error("Failed to query resource by slug/id:", err);
-  }
-
-  if (!resource) {
-    resource = defaultResources.find((r) => r.slug === slug || r.id === slug);
-  }
+  const resource = await getResource(slug);
 
   if (!resource) {
     notFound();

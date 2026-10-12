@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, BookOpen, Tag, Sparkles } from "lucide-react";
@@ -7,39 +8,45 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Deduplicated per-request fetcher using React cache
+const getArticle = cache(async (slug: string) => {
+  try {
+    const supabase = await createClient();
+    let { data: article } = await supabase
+      .from("articles")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (!article) {
+      const { data: artById } = await supabase
+        .from("articles")
+        .select("*")
+        .eq("id", slug)
+        .maybeSingle();
+      article = artById;
+    }
+
+    return article || null;
+  } catch (err) {
+    console.error("Failed to query article by slug/id:", err);
+    return null;
+  }
+});
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-  let { data: article } = await supabase.from("articles").select("title, excerpt").eq("slug", slug).maybeSingle();
-  if (!article) {
-    const { data: artById } = await supabase.from("articles").select("title, excerpt").eq("id", slug).maybeSingle();
-    article = artById;
-  }
+  const article = await getArticle(slug);
 
   return {
     title: article ? `${article.title} | Ideas by Suyash` : "Article Details",
-    description: article?.excerpt || "Technical blog post and engineering guide.",
+    description: article?.excerpt || article?.content?.slice(0, 160) || "Technical blog post and engineering guide.",
   };
 }
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
-
-  let { data: article } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (!article) {
-    const { data: artById } = await supabase
-      .from("articles")
-      .select("*")
-      .eq("id", slug)
-      .maybeSingle();
-    article = artById;
-  }
+  const article = await getArticle(slug);
 
   if (!article) {
     notFound();
@@ -92,6 +99,8 @@ export default async function ArticlePage({ params }: PageProps) {
                   <img 
                     src={article.cover_image} 
                     alt={article.title} 
+                    loading="eager"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                 </div>

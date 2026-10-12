@@ -14,7 +14,7 @@ export default async function ResourcesPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("resources")
-      .select("*")
+      .select("id, title, slug, cover_image, detail_text, category, download_url, is_published, created_at")
       .eq("is_published", true)
       .order("created_at", { ascending: false });
 

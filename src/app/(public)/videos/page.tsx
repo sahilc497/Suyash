@@ -13,7 +13,7 @@ export default async function VideosPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("social_posts")
-      .select("*")
+      .select("id, title, thumbnail_url, content_url, content_type, platform, published_at")
       .order("published_at", { ascending: false });
       
     if (data) videos = data;

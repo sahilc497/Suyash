@@ -14,7 +14,7 @@ export default async function ArticlesPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("articles")
-      .select("*")
+      .select("id, title, slug, excerpt, reading_time, category, created_at, cover_image")
       .eq("is_published", true)
       .order("created_at", { ascending: false });
       

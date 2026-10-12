@@ -113,6 +113,8 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                     <img 
                       src={project.image_url || "/circuit-schematic.jpg"} 
                       alt={project.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                     />
                     <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-steel-blue text-white text-[11px] font-bold tracking-wide shadow-xs">

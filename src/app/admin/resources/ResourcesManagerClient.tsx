@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import FormattedText from "@/components/FormattedText";
 import { Plus, Edit2, Trash2, Image as ImageIcon, Check, X, ExternalLink, AlertCircle, FileText, Download, Tag } from "lucide-react";
 import { ResourceItem } from "@/app/admin/resources/page";
+import { optimizeImageBeforeUpload } from "@/lib/imageOptimization";
 
 export default function ResourcesManagerClient({ initialResources }: { initialResources: ResourceItem[] }) {
   const [resources, setResources] = useState<ResourceItem[]>(initialResources);
@@ -69,13 +70,22 @@ export default function ResourcesManagerClient({ initialResources }: { initialRe
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
     try {
       const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `resource_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const { blob, contentType, cacheControl } = await optimizeImageBeforeUpload(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.82,
+      });
+
+      const fileName = `resource_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.webp`;
       const filePath = `covers/${fileName}`;
 
       const { error } = await supabase.storage
         .from('resource-covers')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, blob, {
+          contentType: contentType || 'image/webp',
+          cacheControl: cacheControl || '31536000, immutable',
+          upsert: true,
+        });
 
       if (error) {
         console.error("Storage upload error:", error);
