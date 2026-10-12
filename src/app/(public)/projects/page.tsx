@@ -13,7 +13,7 @@ export default async function ProjectsPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("projects")
-      .select("id, title, slug, image_url, category, short_description, tags, difficulty, status, progress, created_at")
+      .select("id, title, slug, image_url, category, short_description, difficulty, status, progress, created_at")
       .eq("is_published", true)
       .order("created_at", { ascending: false });
       

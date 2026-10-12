@@ -35,7 +35,7 @@ export default async function Home() {
     // Fetch published projects
     const { data: fetchedProjects } = await supabase
       .from("projects")
-      .select("id, title, slug, image_url, category, short_description, tags, difficulty, status, progress, created_at")
+      .select("id, title, slug, image_url, category, short_description, difficulty, status, progress, created_at")
       .eq("is_published", true)
       .order("created_at", { ascending: false })
       .limit(4);
