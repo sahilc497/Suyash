@@ -129,6 +129,18 @@ export async function optimizeImageBeforeUpload(
             });
           }
 
+          // If original file was already smaller and was WebP, preserve it
+          if (file.type === 'image/webp' && blob.size >= file.size) {
+            return resolve({
+              blob: file,
+              filename: file.name,
+              contentType: 'image/webp',
+              width: originWidth,
+              height: originHeight,
+              cacheControl: '31536000, immutable',
+            });
+          }
+
           const baseName = file.name.replace(/\.[^/.]+$/, '');
           const newFilename = `${baseName}_${Date.now()}.webp`;
 

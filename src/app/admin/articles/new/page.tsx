@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Upload, ArrowLeft, ImageIcon, FileText } from "lucide-react";
 import Link from "next/link";
+import { optimizeImageBeforeUpload } from "@/lib/imageOptimization";
 
 export default function NewArticlePage() {
   const router = useRouter();
@@ -58,13 +59,22 @@ export default function NewArticlePage() {
   const uploadCoverToSupabase = async (file: File): Promise<string | null> => {
     try {
       const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `article_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const { blob, contentType, cacheControl } = await optimizeImageBeforeUpload(file, {
+        maxWidth: 1200,
+        maxHeight: 800,
+        quality: 0.82,
+      });
+
+      const fileName = `article_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.webp`;
       const filePath = `articles/${fileName}`;
 
       const { error } = await supabase.storage
         .from('article-covers')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, blob, {
+          contentType: contentType || 'image/webp',
+          cacheControl: cacheControl || '31536000, immutable',
+          upsert: true,
+        });
 
       if (error) {
         console.error("Storage upload error:", error);
